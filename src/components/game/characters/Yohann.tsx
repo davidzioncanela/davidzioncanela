@@ -1,9 +1,10 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier } from '@react-three/rapier';
 import { Mesh, Vector3, Ray } from 'three';
+import { useInput } from '@/contexts/InputContext';
 
 interface YohannProps {
   position?: [number, number, number];
@@ -13,30 +14,13 @@ interface YohannProps {
 export function Yohann({ position = [1, 1, 0], onPositionChange }: YohannProps) {
   const bodyRef = useRef<any>(null);
   const [isGrounded, setIsGrounded] = useState(false);
-  const { rapier, world } = useRapier();
-
-  const keys = useRef<{ [key: string]: boolean }>({});
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      keys.current[e.key] = true;
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      keys.current[e.key] = false;
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
+  const { world } = useRapier();
+  const { keys } = useInput();
 
   useFrame((state, delta) => {
     const body = bodyRef.current;
     if (!body) return;
 
-    // Ground detection
     const origin = body.translation();
     const ray = new Ray(origin, new Vector3(0, -1, 0));
     const hit = world.castRay(ray, 1.2, true);

@@ -1,9 +1,10 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier } from '@react-three/rapier';
 import { Mesh, Vector3, Ray } from 'three';
+import { useInput } from '@/contexts/InputContext';
 
 interface DavidProps {
   position?: [number, number, number];
@@ -18,24 +19,8 @@ export function David({ position = [0, 1, 0], onPowerUpChange, onPositionChange 
   const [crouchTimer, setCrouchTimer] = useState(0);
   const [isCrouching, setIsCrouching] = useState(false);
   const [activePowerUp, setActivePowerUp] = useState<string | null>(null);
-  const { rapier, world } = useRapier();
-
-  const keys = useRef<{ [key: string]: boolean }>({});
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      keys.current[e.key] = true;
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      keys.current[e.key] = false;
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
+  const { world } = useRapier();
+  const { keys } = useInput();
 
   useFrame((state, delta) => {
     const body = bodyRef.current;
@@ -53,7 +38,6 @@ export function David({ position = [0, 1, 0], onPowerUpChange, onPositionChange 
     const impulse = new Vector3(moveX * speed * delta, 0, moveZ * speed * delta);
     body.applyImpulse(impulse, true);
 
-    // Ground detection via raycast
     const origin = body.translation();
     const ray = new Ray(origin, new Vector3(0, -1, 0));
     const hit = world.castRay(ray, 1.2, true);
