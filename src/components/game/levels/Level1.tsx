@@ -1,0 +1,70 @@
+'use client';
+
+import { useRef, useState } from 'react';
+import { RigidBody, CuboidCollider } from '@react-three/rapier';
+import { David } from '../characters/David';
+import { Yohann } from '../characters/Yohann';
+import { NPC } from '../enemies/NPC';
+import { CloudPlatform } from '../platforms/CloudPlatform';
+import { GrassPlatform } from '../platforms/GrassPlatform';
+import { PowerUpBox } from '../powerups/PowerUpBox';
+import { TextBoxTrigger } from '../dialogs/TextBoxTrigger';
+import { GameState } from '../GameCanvas';
+
+interface Level1Props {
+  gameState: GameState;
+  setGameState: (state: GameState) => void;
+  setDialogText: (text: string[]) => void;
+}
+
+export function Level1({ gameState, setGameState, setDialogText }: Level1Props) {
+  const [activePowerUp, setActivePowerUp] = useState<string | null>(null);
+  const npcRef = useRef<any>(null);
+
+  return (
+    <group>
+      {/* Fase 1: Nas Nuvens - Início */}
+      <CloudPlatform position={[-10, 8, -5]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[-5, 6, -5]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[0, 4, -5]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[5, 2, -5]} scale={[3, 0.5, 3]} />
+      
+      <TextBoxTrigger
+        position={[0, 5, -5]}
+        text={[
+          'Dávid e Yohann: Precisamos resgatar a Laura!',
+          'Ela foi raptada pelo terrível Bowser Jr.!',
+          'Vamos descer das nuvens e iniciar nossa missão na pracinha!',
+        ]}
+        setGameState={setGameState}
+        setDialogText={setDialogText}
+      />
+
+      {/* Descendo para Terra */}
+      <CloudPlatform position={[10, 0, -5]} scale={[3, 0.5, 3]} />
+      
+      {/* Terra - Pracinha */}
+      <GrassPlatform position={[0, -1, 0]} scale={[20, 1, 5]} />
+      <GrassPlatform position={[25, 1, 0]} scale={[8, 0.5, 3]} />
+      <GrassPlatform position={[40, 2, 0]} scale={[6, 0.5, 3]} />
+      
+      {/* Power-ups */}
+      <PowerUpBox position={[25, 2, 0]} type="super-speed" />
+      <PowerUpBox position={[40, 3, 0]} type="laser" />
+      
+      {/* NPC inimigo com duelo - Metal Slug style */}
+      <NPC
+        ref={npcRef}
+        position={[30, 0.5, 0]}
+        name="Goomba Malandro"
+        health={100}
+        gameState={gameState}
+        setGameState={setGameState}
+      />
+
+      {/* Personagens principais */}
+      <David position={[-5, 1, 0]} onPowerUpChange={setActivePowerUp} />
+      <Yohann position={[-3, 1, 0]} />
+    </group>
+  );
+}
