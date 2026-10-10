@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier } from '@react-three/rapier';
-import { Mesh, Vector3, Ray } from 'three';
+import { Mesh, Vector3, Ray, RayColliderIntersection } from 'three';
 import { useInput } from '@/contexts/InputContext';
 
 interface DavidProps {
@@ -40,7 +40,7 @@ export function David({ position = [0, 1, 0], onPowerUpChange, onPositionChange 
 
     const origin = body.translation();
     const ray = new Ray(origin, new Vector3(0, -1, 0));
-    const hit = world.castRay(ray, 1.2, true);
+    const hit = world.castRay(ray, 1.3, true) as RayColliderIntersection | null;
     setIsGrounded(hit !== null);
 
     if ((keys.current[' '] || keys.current['ArrowUp']) && isGrounded) {

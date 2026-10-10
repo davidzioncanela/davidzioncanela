@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier } from '@react-three/rapier';
-import { Mesh, Vector3, Ray } from 'three';
+import { Mesh, Vector3, Ray, RayColliderIntersection } from 'three';
 import { useInput } from '@/contexts/InputContext';
 
 interface YohannProps {
@@ -13,7 +13,6 @@ interface YohannProps {
 
 export function Yohann({ position = [1, 1, 0], onPositionChange }: YohannProps) {
   const bodyRef = useRef<any>(null);
-  const [isGrounded, setIsGrounded] = useState(false);
   const { world } = useRapier();
   const { keys } = useInput();
 
@@ -23,8 +22,7 @@ export function Yohann({ position = [1, 1, 0], onPositionChange }: YohannProps) 
 
     const origin = body.translation();
     const ray = new Ray(origin, new Vector3(0, -1, 0));
-    const hit = world.castRay(ray, 1.2, true);
-    setIsGrounded(hit !== null);
+    const hit = world.castRay(ray, 1.3, true) as RayColliderIntersection | null;
 
     const pos = body.translation();
     const vel = body.linvel();
