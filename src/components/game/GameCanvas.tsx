@@ -12,6 +12,7 @@ import { GameOverScreen } from './ui/GameOverScreen';
 import { VictoryScreen } from './ui/VictoryScreen';
 import { InputProvider } from '@/contexts/InputContext';
 import { DeviceDetector } from './ui/DeviceDetector';
+import { DuelHUD } from './ui/DuelHUD';
 
 export type GameState = 'playing' | 'paused' | 'dialog' | 'duel' | 'gameOver' | 'victory';
 
@@ -40,6 +41,7 @@ export default function GameCanvas() {
                 setGameState={setGameState}
                 setDialogText={setDialogText}
                 onPlayerPositionChange={handlePlayerPositionChange}
+                playerPosition={playerPosition}
               />
             </Physics>
             <CameraController
@@ -51,6 +53,7 @@ export default function GameCanvas() {
           </Suspense>
         </Canvas>
         <GameHUD />
+        <DuelHUD />
         {gameState === 'dialog' && (
           <DialogBox
             text={dialogText}

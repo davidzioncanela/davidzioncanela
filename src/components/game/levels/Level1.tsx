@@ -15,14 +15,14 @@ interface Level1Props {
   setGameState: (state: GameState) => void;
   setDialogText: (text: string[]) => void;
   onPlayerPositionChange?: (pos: [number, number, number], vel: [number, number, number]) => void;
+  playerPosition?: [number, number, number];
 }
 
-export function Level1({ gameState, setGameState, setDialogText, onPlayerPositionChange }: Level1Props) {
+export function Level1({ gameState, setGameState, setDialogText, onPlayerPositionChange, playerPosition = [0,0,0] }: Level1Props) {
   const [activePowerUp, setActivePowerUp] = useState<string | null>(null);
 
   return (
     <group>
-      {/* Fase 1: Nas Nuvens - Blocos de terra flutuantes estilo DBZ */}
       <CloudPlatform position={[-12, 14, 0]} scale={[4, 0.5, 4]} animated targetY={10} delay={0.3} speed={1.3} float floatSpeed={0.5} floatRange={0.3} />
       <CloudPlatform position={[-6, 12, 0]} scale={[4, 0.5, 4]} animated targetY={8} delay={0.6} speed={1.3} float floatSpeed={0.6} floatRange={0.25} />
       <CloudPlatform position={[0, 10, 0]} scale={[4, 0.5, 4]} animated targetY={6} delay={0.9} speed={1.3} float floatSpeed={0.7} floatRange={0.3} />
@@ -41,13 +41,11 @@ export function Level1({ gameState, setGameState, setDialogText, onPlayerPositio
         setDialogText={setDialogText}
       />
 
-      {/* Caminho flutuante descendo em direção à Terra */}
       <CloudPlatform position={[18, 4, 0]} scale={[3.5, 0.5, 3.5]} float floatSpeed={0.6} floatRange={0.3} />
       <CloudPlatform position={[24, 3, 0]} scale={[3.5, 0.5, 3.5]} float floatSpeed={0.7} floatRange={0.25} />
       <CloudPlatform position={[30, 2.5, 0]} scale={[3.5, 0.5, 3.5]} float floatSpeed={0.5} floatRange={0.3} />
       <CloudPlatform position={[36, 2, 0]} scale={[3.5, 0.5, 3.5]} float floatSpeed={0.65} floatRange={0.28} />
       
-      {/* Terra - Área final/pracinha */}
       <GrassPlatform position={[48, 0, 0]} scale={[12, 1, 6]} />
       
       <TextBoxTrigger
@@ -71,9 +69,9 @@ export function Level1({ gameState, setGameState, setDialogText, onPlayerPositio
         maxHealth={100}
         gameState={gameState}
         setGameState={setGameState}
+        playerPosition={playerPosition}
       />
 
-      {/* Personagens principais nas nuvens */}
       <David position={[-12, 11, 0]} onPowerUpChange={setActivePowerUp} onPositionChange={onPlayerPositionChange} />
       <Yohann position={[-9, 11, 0]} onPositionChange={onPlayerPositionChange} />
     </group>
