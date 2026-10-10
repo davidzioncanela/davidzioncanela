@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Mesh, DirectionalLight, Vector3 } from 'three';
+import { Mesh, DirectionalLight } from 'three';
 
 export function SkySystem() {
   const sunRef = useRef<Mesh>(null);
@@ -11,7 +11,6 @@ export function SkySystem() {
   const cloud2Ref = useRef<Mesh>(null);
   const cloud3Ref = useRef<Mesh>(null);
   const time = useRef(0);
-
   const cycleDuration = 1440;
 
   useFrame((state, delta) => {
@@ -22,11 +21,13 @@ export function SkySystem() {
     if (sunRef.current) {
       const x = Math.cos(t) * 40;
       const y = Math.sin(t) * 30 + 15;
-      sunRef.current.position.set(x, Math.max(y, -5), -60);
+      sunRef.current.position.set(x, y > -2 ? y : -2, -60);
     }
     if (dirLightRef.current) {
       const intensity = Math.max(0.15, Math.sin(t));
       dirLightRef.current.intensity = intensity;
+      const pos = sunRef.current?.position;
+      if (pos) dirLightRef.current.position.set(pos.x + 5, pos.y + 5, pos.z + 10);
     }
     if (cloud1Ref.current) cloud1Ref.current.position.x = (cloud1Ref.current.position.x + delta * 0.5 + 80) % 160 - 80;
     if (cloud2Ref.current) cloud2Ref.current.position.x = (cloud2Ref.current.position.x + delta * 0.3 + 80) % 160 - 80;
@@ -41,15 +42,15 @@ export function SkySystem() {
         <meshBasicMaterial color="#FFF3B0" />
       </mesh>
       <mesh ref={cloud1Ref} position={[-30, 25, -50]}>
-        <sphereGeometry args={[3, 12, 8]} scale={[2.5, 0.8, 1]} />
+        <sphereGeometry args={[3, 12, 8]} />
         <meshBasicMaterial color="#FFFFFF" transparent opacity={0.85} />
       </mesh>
       <mesh ref={cloud2Ref} position={[10, 22, -48]}>
-        <sphereGeometry args={[2.5, 12, 8]} scale={[2, 0.7, 1]} />
+        <sphereGeometry args={[2.5, 12, 8]} />
         <meshBasicMaterial color="#FFFFFF" transparent opacity={0.85} />
       </mesh>
       <mesh ref={cloud3Ref} position={[40, 28, -52]}>
-        <sphereGeometry args={[2.8, 12, 8]} scale={[2.2, 0.75, 1]} />
+        <sphereGeometry args={[2.8, 12, 8]} />
         <meshBasicMaterial color="#FFFFFF" transparent opacity={0.85} />
       </mesh>
     </group>
