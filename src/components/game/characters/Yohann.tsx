@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier } from '@react-three/rapier';
-import { Mesh, Vector3 } from 'three';
+import { Mesh, Vector3, Ray } from 'three';
 import { useInput } from '@/contexts/InputContext';
 
 interface YohannProps {
@@ -16,13 +16,13 @@ export function Yohann({ position = [1, 1, 0], onPositionChange }: YohannProps) 
   const { world } = useRapier();
   const { keys } = useInput();
 
-  useFrame((state, delta) => {
+  useFrame(() => {
     const body = bodyRef.current;
     if (!body) return;
 
     const origin = body.translation();
-    const ray = new (world as any).Ray(origin, { x: 0, y: -1, z: 0 });
-    const hit = (world as any).castRay(ray, 1.1, true);
+    const ray = new Ray(origin, new Vector3(0, -1, 0));
+    const hit = (world as any).castRay(ray as any, 1.1, true);
 
     const pos = body.translation();
     const vel = body.linvel();
@@ -38,7 +38,6 @@ export function Yohann({ position = [1, 1, 0], onPositionChange }: YohannProps) 
       lockRotations
       type="dynamic"
     >
-      {/* Yohann - 3 anos e meio: bem menor */}
       <CapsuleCollider args={[0.25, 0.25]} position={[0, 0.65, 0]} />
       <mesh castShadow position={[0, 0.65, 0]} scale={[0.8, 0.65, 0.8]}>
         <capsuleGeometry args={[0.32, 0.65, 8, 16]} />

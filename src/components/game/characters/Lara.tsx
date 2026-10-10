@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier } from '@react-three/rapier';
-import { Mesh, Vector3 } from 'three';
+import { Mesh, Vector3, Ray } from 'three';
 import { useInput } from '@/contexts/InputContext';
 
 interface LaraProps {
@@ -21,8 +21,8 @@ export function Lara({ position = [2, 1, 0], onPositionChange }: LaraProps) {
     if (!body) return;
 
     const origin = body.translation();
-    const ray = new (world as any).Ray(origin, { x: 0, y: -1, z: 0 });
-    const hit = (world as any).castRay(ray, 0.9, true);
+    const ray = new Ray(origin, new Vector3(0, -1, 0));
+    const hit = (world as any).castRay(ray as any, 0.9, true);
 
     const pos = body.translation();
     const vel = body.linvel();
@@ -38,7 +38,6 @@ export function Lara({ position = [2, 1, 0], onPositionChange }: LaraProps) {
       lockRotations
       type="dynamic"
     >
-      {/* Lara - 2 anos e meio: bem pequenininha */}
       <CapsuleCollider args={[0.2, 0.2]} position={[0, 0.55, 0]} />
       <mesh castShadow position={[0, 0.55, 0]} scale={[0.7, 0.55, 0.7]}>
         <capsuleGeometry args={[0.26, 0.55, 8, 16]} />
@@ -47,7 +46,7 @@ export function Lara({ position = [2, 1, 0], onPositionChange }: LaraProps) {
       <group position={[0.16, 0.7, 0]}>
         <mesh>
           <boxGeometry args={[0.1, 0.1, 0.35]} />
-          <meshStandardMaterial color="#A78BFA" />
+          <meshBasicMaterial color="#A78BFA" />
         </mesh>
       </group>
     </RigidBody>
