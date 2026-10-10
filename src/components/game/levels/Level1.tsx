@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { RigidBody, CuboidCollider } from '@react-three/rapier';
 import { David } from '../characters/David';
 import { Yohann } from '../characters/Yohann';
 import { NPC } from '../enemies/NPC';
@@ -15,22 +14,22 @@ interface Level1Props {
   gameState: GameState;
   setGameState: (state: GameState) => void;
   setDialogText: (text: string[]) => void;
+  onPlayerPositionChange?: (pos: [number, number, number], vel: [number, number, number]) => void;
 }
 
-export function Level1({ gameState, setGameState, setDialogText }: Level1Props) {
+export function Level1({ gameState, setGameState, setDialogText, onPlayerPositionChange }: Level1Props) {
   const [activePowerUp, setActivePowerUp] = useState<string | null>(null);
-  const npcRef = useRef<any>(null);
 
   return (
     <group>
       {/* Fase 1: Nas Nuvens - Início */}
-      <CloudPlatform position={[-10, 8, -5]} scale={[3, 0.5, 3]} />
-      <CloudPlatform position={[-5, 6, -5]} scale={[3, 0.5, 3]} />
-      <CloudPlatform position={[0, 4, -5]} scale={[3, 0.5, 3]} />
-      <CloudPlatform position={[5, 2, -5]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[-10, 8, 0]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[-5, 6, 0]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[0, 4, 0]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[5, 2, 0]} scale={[3, 0.5, 3]} />
       
       <TextBoxTrigger
-        position={[0, 5, -5]}
+        position={[0, 5, 0]}
         text={[
           'Dávid e Yohann: Precisamos resgatar a Laura!',
           'Ela foi raptada pelo terrível Bowser Jr.!',
@@ -41,7 +40,7 @@ export function Level1({ gameState, setGameState, setDialogText }: Level1Props) 
       />
 
       {/* Descendo para Terra */}
-      <CloudPlatform position={[10, 0, -5]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[10, 0, 0]} scale={[3, 0.5, 3]} />
       
       {/* Terra - Pracinha */}
       <GrassPlatform position={[0, -1, 0]} scale={[20, 1, 5]} />
@@ -54,17 +53,17 @@ export function Level1({ gameState, setGameState, setDialogText }: Level1Props) 
       
       {/* NPC inimigo com duelo - Metal Slug style */}
       <NPC
-        ref={npcRef}
         position={[30, 0.5, 0]}
         name="Goomba Malandro"
         health={100}
+        maxHealth={100}
         gameState={gameState}
         setGameState={setGameState}
       />
 
       {/* Personagens principais */}
-      <David position={[-5, 1, 0]} onPowerUpChange={setActivePowerUp} />
-      <Yohann position={[-3, 1, 0]} />
+      <David position={[-5, 2, 0]} onPowerUpChange={setActivePowerUp} onPositionChange={onPlayerPositionChange} />
+      <Yohann position={[-3, 2, 0]} onPositionChange={onPlayerPositionChange} />
     </group>
   );
 }

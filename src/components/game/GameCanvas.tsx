@@ -16,6 +16,13 @@ export type GameState = 'playing' | 'paused' | 'dialog' | 'duel' | 'gameOver' | 
 export default function GameCanvas() {
   const [gameState, setGameState] = useState<GameState>('playing');
   const [dialogText, setDialogText] = useState<string[]>([]);
+  const [playerPosition, setPlayerPosition] = useState<[number, number, number]>([0, 5, 0]);
+  const [playerVelocity, setPlayerVelocity] = useState<[number, number, number]>([0, 0, 0]);
+
+  const handlePlayerPositionChange = (pos: [number, number, number], vel: [number, number, number]) => {
+    setPlayerPosition(pos);
+    setPlayerVelocity(vel);
+  };
 
   return (
     <div className="relative h-screen w-screen">
@@ -29,9 +36,14 @@ export default function GameCanvas() {
               gameState={gameState}
               setGameState={setGameState}
               setDialogText={setDialogText}
+              onPlayerPositionChange={handlePlayerPositionChange}
             />
           </Physics>
-          <CameraController gameState={gameState} />
+          <CameraController
+            gameState={gameState}
+            playerPosition={playerPosition}
+            playerVelocity={playerVelocity}
+          />
           <OrbitControls enablePan={false} enableZoom={false} enableRotate={false} />
         </Suspense>
       </Canvas>
