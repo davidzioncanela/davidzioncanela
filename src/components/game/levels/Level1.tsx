@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { David } from '../characters/David';
 import { Yohann } from '../characters/Yohann';
+import { Lara } from '../characters/Lara';
 import { NPC } from '../enemies/NPC';
 import { CloudPlatform } from '../platforms/CloudPlatform';
 import { GrassPlatform } from '../platforms/GrassPlatform';
@@ -74,6 +75,7 @@ export function Level1({ gameState, setGameState, setDialogText, onPlayerPositio
 
       <David position={[-12, 11, 0]} onPowerUpChange={setActivePowerUp} onPositionChange={onPlayerPositionChange} />
       <Yohann position={[-9, 11, 0]} onPositionChange={onPlayerPositionChange} />
+      <Lara position={[-7, 11, 0]} onPositionChange={onPlayerPositionChange} />
     </group>
   );
 }
