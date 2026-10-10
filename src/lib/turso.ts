@@ -15,7 +15,6 @@ export const turso = createClient({
   authToken,
 });
 
-// Schema para salvar progresso e pontuações em produção
 export async function initializeDatabase() {
   await turso.execute(`
     CREATE TABLE IF NOT EXISTS game_progress (
@@ -60,8 +59,7 @@ export async function saveProgress({
   powerupsUnlocked?: string[];
 }) {
   const powerupsJson = powerupsUnlocked ? JSON.stringify(powerupsUnlocked) : null;
-  
-  await turso.execute(
+  await (turso as any).execute(
     `INSERT INTO game_progress (player_name, level, score, lives, collected_coins, powerups_unlocked, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
      ON CONFLICT(player_name) DO UPDATE SET
@@ -86,7 +84,7 @@ export async function saveHighScore({
   levelReached: number;
   timePlayed?: number;
 }) {
-  await turso.execute(
+  await (turso as any).execute(
     `INSERT INTO high_scores (player_name, score, level_reached, time_played)
      VALUES (?, ?, ?, ?)`,
     [playerName, score, levelReached, timePlayed || 0]
@@ -94,7 +92,7 @@ export async function saveHighScore({
 }
 
 export async function getHighScores(limit = 10) {
-  const result = await turso.execute(
+  const result = await (turso as any).execute(
     `SELECT * FROM high_scores ORDER BY score DESC, created_at DESC LIMIT ?`,
     [limit]
   );
@@ -102,7 +100,7 @@ export async function getHighScores(limit = 10) {
 }
 
 export async function getProgress(playerName: string) {
-  const result = await turso.execute(
+  const result = await (turso as any).execute(
     `SELECT * FROM game_progress WHERE player_name = ?`,
     [playerName]
   );

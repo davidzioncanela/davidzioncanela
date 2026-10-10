@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier } from '@react-three/rapier';
-import { Mesh, Vector3, Ray, RayColliderIntersection } from 'three';
+import { Mesh, Vector3 } from 'three';
 import { useInput } from '@/contexts/InputContext';
 
 interface DavidProps {
@@ -39,9 +39,9 @@ export function David({ position = [0, 1, 0], onPowerUpChange, onPositionChange 
     body.applyImpulse(impulse, true);
 
     const origin = body.translation();
-    const ray = new Ray(origin, new Vector3(0, -1, 0));
-    const hit = world.castRay(ray, 1.3, true) as RayColliderIntersection | null;
-    setIsGrounded(hit !== null);
+    const ray = new (world as any).Ray(origin, { x: 0, y: -1, z: 0 });
+    const hit = (world as any).castRay(ray, 1.3, true);
+    setIsGrounded(!!hit);
 
     if ((keys.current[' '] || keys.current['ArrowUp']) && isGrounded) {
       body.applyImpulse(new Vector3(0, 8, 0), true);
@@ -75,14 +75,15 @@ export function David({ position = [0, 1, 0], onPowerUpChange, onPositionChange 
       lockRotations
       type="dynamic"
     >
-      <CapsuleCollider args={[0.4, 0.4]} position={[0, isCrouching ? 0.6 : 1, 0]} />
-      <mesh ref={meshRef} castShadow position={[0, isCrouching ? 0.6 : 1, 0]} scale={isCrouching ? [1, 0.7, 1] : [1, 1, 1]}>
-        <capsuleGeometry args={[0.5, 1, 8, 16]} />
+      {/* Dávid - 7 anos: altura ~0.95m (menor) */}
+      <CapsuleCollider args={[0.35, 0.35]} position={[0, isCrouching ? 0.5 : 0.95, 0]} />
+      <mesh ref={meshRef} castShadow position={[0, isCrouching ? 0.5 : 0.95, 0]} scale={isCrouching ? [0.9, 0.65, 0.9] : [1, 0.95, 1]}>
+        <capsuleGeometry args={[0.4, 0.9, 8, 16]} />
         <meshStandardMaterial color="#4A9FD5" />
       </mesh>
-      <group position={[0.3, isCrouching ? 0.8 : 1.2, 0]}>
+      <group position={[0.25, isCrouching ? 0.7 : 1.15, 0]}>
         <mesh>
-          <boxGeometry args={[0.2, 0.2, 0.6]} />
+          <boxGeometry args={[0.15, 0.15, 0.5]} />
           <meshStandardMaterial color="#1a365d" />
         </mesh>
       </group>
