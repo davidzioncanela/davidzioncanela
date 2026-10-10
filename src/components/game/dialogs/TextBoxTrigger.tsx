@@ -9,17 +9,17 @@ interface TextBoxTriggerProps {
   text: string[];
   setGameState: (state: GameState) => void;
   setDialogText: (text: string[]) => void;
+  oneTime?: boolean;
 }
 
-export function TextBoxTrigger({ position, text, setGameState, setDialogText }: TextBoxTriggerProps) {
+export function TextBoxTrigger({ position, text, setGameState, setDialogText, oneTime = true }: TextBoxTriggerProps) {
   const [triggered, setTriggered] = useState(false);
 
   const handleTrigger = () => {
-    if (!triggered) {
-      setTriggered(true);
-      setDialogText(text);
-      setGameState('dialog');
-    }
+    if (oneTime && triggered) return;
+    setTriggered(true);
+    setDialogText(text);
+    setGameState('dialog');
   };
 
   return (
@@ -30,8 +30,8 @@ export function TextBoxTrigger({ position, text, setGameState, setDialogText }: 
         onIntersectionEnter={() => handleTrigger()}
       />
       <mesh visible={!triggered}>
-        <boxGeometry args={[0.5, 0.5, 0.5]} />
-        <meshStandardMaterial color="#00FF00" emissive="#00FF00" emissiveIntensity={0.5} />
+        <boxGeometry args={[0.5, 0.3, 0.5]} />
+        <meshStandardMaterial color="#00FF88" emissive="#00FF88" emissiveIntensity={0.6} />
       </mesh>
     </RigidBody>
   );

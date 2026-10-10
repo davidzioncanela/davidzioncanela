@@ -23,10 +23,10 @@ export function Level1({ gameState, setGameState, setDialogText, onPlayerPositio
   return (
     <group>
       {/* Fase 1: Nas Nuvens - Início */}
-      <CloudPlatform position={[-10, 8, 0]} scale={[3, 0.5, 3]} />
-      <CloudPlatform position={[-5, 6, 0]} scale={[3, 0.5, 3]} />
-      <CloudPlatform position={[0, 4, 0]} scale={[3, 0.5, 3]} />
-      <CloudPlatform position={[5, 2, 0]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[-10, 12, 0]} scale={[3, 0.5, 3]} animated targetY={8} delay={0.5} speed={1.2} />
+      <CloudPlatform position={[-5, 10, 0]} scale={[3, 0.5, 3]} animated targetY={6} delay={0.8} speed={1.2} />
+      <CloudPlatform position={[0, 8, 0]} scale={[3, 0.5, 3]} animated targetY={4} delay={1.1} speed={1.2} />
+      <CloudPlatform position={[5, 6, 0]} scale={[3, 0.5, 3]} animated targetY={2} delay={1.4} speed={1.2} />
       
       <TextBoxTrigger
         position={[0, 5, 0]}
@@ -40,12 +40,23 @@ export function Level1({ gameState, setGameState, setDialogText, onPlayerPositio
       />
 
       {/* Descendo para Terra */}
-      <CloudPlatform position={[10, 0, 0]} scale={[3, 0.5, 3]} />
+      <CloudPlatform position={[10, 4, 0]} scale={[3, 0.5, 3]} animated targetY={0} delay={1.8} speed={1.2} />
       
       {/* Terra - Pracinha */}
       <GrassPlatform position={[0, -1, 0]} scale={[20, 1, 5]} />
       <GrassPlatform position={[25, 1, 0]} scale={[8, 0.5, 3]} />
       <GrassPlatform position={[40, 2, 0]} scale={[6, 0.5, 3]} />
+      
+      {/* Diálogos de progressão */}
+      <TextBoxTrigger
+        position={[15, 1, 0]}
+        text={[
+          'Cuidado! Estamos chegando na área perigosa...',
+          'Bowser Jr. deixou alguns guardas para proteger o caminho!',
+        ]}
+        setGameState={setGameState}
+        setDialogText={setDialogText}
+      />
       
       {/* Power-ups */}
       <PowerUpBox position={[25, 2, 0]} type="super-speed" />
@@ -62,8 +73,8 @@ export function Level1({ gameState, setGameState, setDialogText, onPlayerPositio
       />
 
       {/* Personagens principais */}
-      <David position={[-5, 2, 0]} onPowerUpChange={setActivePowerUp} onPositionChange={onPlayerPositionChange} />
-      <Yohann position={[-3, 2, 0]} onPositionChange={onPlayerPositionChange} />
+      <David position={[-5, 10, 0]} onPowerUpChange={setActivePowerUp} onPositionChange={onPlayerPositionChange} />
+      <Yohann position={[-3, 10, 0]} onPositionChange={onPlayerPositionChange} />
     </group>
   );
 }
