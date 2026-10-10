@@ -22,49 +22,50 @@ export function Level1({ gameState, setGameState, setDialogText, onPlayerPositio
 
   return (
     <group>
-      {/* Fase 1: Nas Nuvens - Início */}
-      <CloudPlatform position={[-10, 12, 0]} scale={[3, 0.5, 3]} animated targetY={8} delay={0.5} speed={1.2} />
-      <CloudPlatform position={[-5, 10, 0]} scale={[3, 0.5, 3]} animated targetY={6} delay={0.8} speed={1.2} />
-      <CloudPlatform position={[0, 8, 0]} scale={[3, 0.5, 3]} animated targetY={4} delay={1.1} speed={1.2} />
-      <CloudPlatform position={[5, 6, 0]} scale={[3, 0.5, 3]} animated targetY={2} delay={1.4} speed={1.2} />
+      {/* Fase 1: Nas Nuvens - Blocos de terra flutuantes estilo DBZ */}
+      <CloudPlatform position={[-12, 14, 0]} scale={[4, 0.5, 4]} animated targetY={10} delay={0.3} speed={1.3} float floatSpeed={0.5} floatRange={0.3} />
+      <CloudPlatform position={[-6, 12, 0]} scale={[4, 0.5, 4]} animated targetY={8} delay={0.6} speed={1.3} float floatSpeed={0.6} floatRange={0.25} />
+      <CloudPlatform position={[0, 10, 0]} scale={[4, 0.5, 4]} animated targetY={6} delay={0.9} speed={1.3} float floatSpeed={0.7} floatRange={0.3} />
+      <CloudPlatform position={[6, 8, 0]} scale={[4, 0.5, 4]} animated targetY={4} delay={1.2} speed={1.3} float floatSpeed={0.55} floatRange={0.25} />
+      <CloudPlatform position={[12, 6, 0]} scale={[4, 0.5, 4]} animated targetY={2} delay={1.5} speed={1.3} float floatSpeed={0.65} floatRange={0.3} />
       
       <TextBoxTrigger
-        position={[0, 5, 0]}
+        position={[0, 7, 0]}
         text={[
           'Dávid e Yohann: Precisamos resgatar a Laura!',
           'Ela foi raptada pelo terrível Bowser Jr.!',
-          'Vamos descer das nuvens e iniciar nossa missão na pracinha!',
+          'Estamos nas nuvens, pulando entre ilhas flutuantes!',
+          'Vamos avançar para resgatá-la!',
         ]}
         setGameState={setGameState}
         setDialogText={setDialogText}
       />
 
-      {/* Descendo para Terra */}
-      <CloudPlatform position={[10, 4, 0]} scale={[3, 0.5, 3]} animated targetY={0} delay={1.8} speed={1.2} />
+      {/* Caminho flutuante descendo em direção à Terra */}
+      <CloudPlatform position={[18, 4, 0]} scale={[3.5, 0.5, 3.5]} float floatSpeed={0.6} floatRange={0.3} />
+      <CloudPlatform position={[24, 3, 0]} scale={[3.5, 0.5, 3.5]} float floatSpeed={0.7} floatRange={0.25} />
+      <CloudPlatform position={[30, 2.5, 0]} scale={[3.5, 0.5, 3.5]} float floatSpeed={0.5} floatRange={0.3} />
+      <CloudPlatform position={[36, 2, 0]} scale={[3.5, 0.5, 3.5]} float floatSpeed={0.65} floatRange={0.28} />
       
-      {/* Terra - Pracinha */}
-      <GrassPlatform position={[0, -1, 0]} scale={[20, 1, 5]} />
-      <GrassPlatform position={[25, 1, 0]} scale={[8, 0.5, 3]} />
-      <GrassPlatform position={[40, 2, 0]} scale={[6, 0.5, 3]} />
+      {/* Terra - Área final/pracinha */}
+      <GrassPlatform position={[48, 0, 0]} scale={[12, 1, 6]} />
       
-      {/* Diálogos de progressão */}
       <TextBoxTrigger
-        position={[15, 1, 0]}
+        position={[24, 4, 0]}
         text={[
-          'Cuidado! Estamos chegando na área perigosa...',
-          'Bowser Jr. deixou alguns guardas para proteger o caminho!',
+          'Cuidado! Estamos nos aproximando...',
+          'Bowser Jr. deixou seus capangas guardando o caminho!',
+          'Preparem-se para um duelo!',
         ]}
         setGameState={setGameState}
         setDialogText={setDialogText}
       />
       
-      {/* Power-ups */}
-      <PowerUpBox position={[25, 2, 0]} type="super-speed" />
-      <PowerUpBox position={[40, 3, 0]} type="laser" />
+      <PowerUpBox position={[24, 4.5, 0]} type="super-speed" />
+      <PowerUpBox position={[36, 3, 0]} type="laser" />
       
-      {/* NPC inimigo com duelo - Metal Slug style */}
       <NPC
-        position={[30, 0.5, 0]}
+        position={[30, 4, 0]}
         name="Goomba Malandro"
         health={100}
         maxHealth={100}
@@ -72,9 +73,9 @@ export function Level1({ gameState, setGameState, setDialogText, onPlayerPositio
         setGameState={setGameState}
       />
 
-      {/* Personagens principais */}
-      <David position={[-5, 10, 0]} onPowerUpChange={setActivePowerUp} onPositionChange={onPlayerPositionChange} />
-      <Yohann position={[-3, 10, 0]} onPositionChange={onPlayerPositionChange} />
+      {/* Personagens principais nas nuvens */}
+      <David position={[-12, 11, 0]} onPowerUpChange={setActivePowerUp} onPositionChange={onPlayerPositionChange} />
+      <Yohann position={[-9, 11, 0]} onPositionChange={onPlayerPositionChange} />
     </group>
   );
 }
