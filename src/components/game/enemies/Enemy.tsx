@@ -73,13 +73,15 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
     const vel = body.linvel();
 
     if (s.health <= 0 || pos.y < -12) {
+      // Cair da fase não dá pontos; só derrotar
+      const defeated = s.health <= 0;
       s.health = 0;
       s.dead = true;
       s.anim = 'Death_A';
       setDead(true);
       setAnimation('Death_A');
       const store = useGameStore.getState();
-      store.addScore(power.id === 'gigante' ? 500 : 200);
+      if (defeated) store.addScore(power.id === 'gigante' ? 500 : power.id === 'monstrinho' ? 100 : 200);
       store.removeEnemy(id);
       setTimeout(() => onDefeated(id), 1200);
       return;
