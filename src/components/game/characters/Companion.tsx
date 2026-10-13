@@ -3,12 +3,13 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier, RapierRigidBody } from '@react-three/rapier';
-import { playerRuntime } from '@/lib/gameRuntime';
+import { players } from '@/lib/gameRuntime';
 import { CharacterModel } from './CharacterModel';
-import { CharacterInfo, capsuleFor } from '@/lib/characters';
+import { CharacterId, CharacterInfo, capsuleFor } from '@/lib/characters';
 
 interface CompanionProps {
   character: CharacterInfo;
+  leader: CharacterId;
   position?: [number, number, number];
   frozen?: boolean;
 }
@@ -19,7 +20,7 @@ const JUMP_VELOCITY = 11;
 const TELEPORT_DISTANCE = 9;
 
 // Companheiro do time: segue o líder, pula junto e reaparece ao lado dele se ficar para trás
-export function Companion({ character, position = [1, 1, 0], frozen = false }: CompanionProps) {
+export function Companion({ character, leader, position = [1, 1, 0], frozen = false }: CompanionProps) {
   const capsule = capsuleFor(character.height);
   const bodyRef = useRef<RapierRigidBody>(null);
   const { world, rapier } = useRapier();
@@ -31,15 +32,17 @@ export function Companion({ character, position = [1, 1, 0], frozen = false }: C
     if (!body) return;
     const pos = body.translation();
     const vel = body.linvel();
-    const target = playerRuntime.position;
+    const lead = players.get(leader);
+    if (!lead) return;
+    const target = lead.position;
 
     const ray = new rapier.Ray({ x: pos.x, y: pos.y + 0.1, z: 0 }, { x: 0, y: -1, z: 0 });
     const grounded = !!world.castRay(ray, 0.2, true, undefined, undefined, undefined, body) && vel.y <= 0.5;
 
-    const dx = target.x - playerRuntime.facing * FOLLOW_DISTANCE - pos.x;
+    const dx = target.x - lead.facing * FOLLOW_DISTANCE - pos.x;
     const tooFar = Math.hypot(target.x - pos.x, target.y - pos.y) > TELEPORT_DISTANCE || pos.y < -10;
-    if (tooFar && playerRuntime.grounded) {
-      body.setTranslation({ x: target.x - playerRuntime.facing, y: target.y + 0.5, z: 0 }, true);
+    if (tooFar && lead.grounded) {
+      body.setTranslation({ x: target.x - lead.facing, y: target.y + 0.5, z: 0 }, true);
       body.setLinvel({ x: 0, y: 0, z: 0 }, true);
       return;
     }

@@ -2,52 +2,64 @@
 
 import { useRef, useState } from 'react';
 import { RigidBody, CuboidCollider } from '@react-three/rapier';
-import { Mesh } from 'three';
+import { Group } from 'three';
 import { useFrame } from '@react-three/fiber';
+import { Sparkles } from '@react-three/drei';
 import { PowerUpType, useGameStore } from '@/store/gameStore';
+import type { CharacterId } from '@/lib/characters';
+import { Burst, POWER_COLORS } from '../effects/PowerEffects';
 
 interface PowerUpBoxProps {
   position: [number, number, number];
   type: PowerUpType;
 }
 
-const COLORS: Record<PowerUpType, string> = {
-  laser: '#22D3EE',
-  'super-speed': '#FACC15',
-  float: '#A5B4FC',
-  'fire-ball': '#F97316',
-  'super-jump': '#4ADE80',
-};
-
-// Caixa flutuante: tocar nela ativa o power-up (substitui o atual)
+// Caixa flutuante brilhante: tocar nela ativa o power-up de quem tocou (substitui o atual)
 export function PowerUpBox({ position, type }: PowerUpBoxProps) {
-  const meshRef = useRef<Mesh>(null);
+  const ref = useRef<Group>(null);
   const [collected, setCollected] = useState(false);
+  const color = POWER_COLORS[type];
 
   useFrame((state) => {
-    if (meshRef.current && !collected) {
-      meshRef.current.rotation.y += 0.04;
-      meshRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.15;
+    if (ref.current && !collected) {
+      ref.current.rotation.y += 0.04;
+      ref.current.rotation.x = Math.sin(state.clock.elapsedTime) * 0.3;
+      ref.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.15;
     }
   });
 
-  if (collected) return null;
-
   return (
     <RigidBody type="fixed" position={position} colliders={false}>
-      <CuboidCollider
-        args={[0.4, 0.4, 0.4]}
-        sensor
-        onIntersectionEnter={({ other }) => {
-          if (!other.rigidBodyObject?.userData?.player) return;
-          setCollected(true);
-          useGameStore.getState().setActivePowerUp(type);
-        }}
-      />
-      <mesh ref={meshRef} castShadow>
-        <boxGeometry args={[0.7, 0.7, 0.7]} />
-        <meshStandardMaterial color={COLORS[type]} emissive={COLORS[type]} emissiveIntensity={0.5} />
-      </mesh>
+      {!collected && (
+        <CuboidCollider
+          args={[0.45, 0.45, 0.45]}
+          sensor
+          onIntersectionEnter={({ other }) => {
+            const who = other.rigidBodyObject?.userData?.player as CharacterId | undefined;
+            if (!who) return;
+            setCollected(true);
+            useGameStore.getState().setPowerUp(who, type);
+          }}
+        />
+      )}
+      {collected ? (
+        <Burst color={color} radius={5} duration={0.9} />
+      ) : (
+        <>
+          <group ref={ref}>
+            <mesh castShadow>
+              <boxGeometry args={[0.7, 0.7, 0.7]} />
+              <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2.5} toneMapped={false} />
+            </mesh>
+            <mesh>
+              <boxGeometry args={[0.95, 0.95, 0.95]} />
+              <meshBasicMaterial color={color} wireframe toneMapped={false} />
+            </mesh>
+          </group>
+          <Sparkles count={25} scale={1.8} size={5} speed={0.8} color={color} />
+          <pointLight color={color} intensity={6} distance={5} />
+        </>
+      )}
     </RigidBody>
   );
 }

@@ -3,12 +3,12 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Group } from 'three';
-import { playerRuntime } from '@/lib/gameRuntime';
+import { players } from '@/lib/gameRuntime';
 import { CharacterModel } from './CharacterModel';
 import { CharacterInfo } from '@/lib/characters';
 
 interface CaptiveProps {
-  characters: [CharacterInfo, CharacterInfo];
+  characters: CharacterInfo[];
   position?: [number, number, number];
   // Só podem ser resgatadas depois que o guarda for derrotado
   canRescue: boolean;
@@ -27,8 +27,8 @@ export function Captive({ characters, position = [0, 0, 0], canRescue, onRescued
       if (cageRef.current && cageRef.current.position.y < 8) cageRef.current.position.y += delta * 3;
       return;
     }
-    const p = playerRuntime.position;
-    if (canRescue && Math.hypot(p.x - position[0], p.y - position[1]) < RESCUE_DISTANCE) {
+    const near = [...players.values()].some((p) => Math.hypot(p.position.x - position[0], p.position.y - position[1]) < RESCUE_DISTANCE);
+    if (canRescue && near) {
       setRescued(true);
       onRescued();
     }
@@ -39,10 +39,17 @@ export function Captive({ characters, position = [0, 0, 0], canRescue, onRescued
   return (
     <group position={position}>
       {characters.map((c, i) => (
-        <group key={c.id} position={[i === 0 ? -0.35 : 0.4, 0, i * 0.1]}>
+        <group key={c.id} position={[(i - (characters.length - 1) / 2) * 0.75, 0, i * 0.1]}>
           <CharacterModel model={c.model} animation={animation} accessories={c.gear} facing={-1} height={c.height} />
         </group>
       ))}
+      {/* Com os quatro jogando, a gaiola guarda a chave da pracinha */}
+      {characters.length === 0 && (
+        <mesh position={[0, 0.9, 0]} rotation={[0, 0, Math.PI / 4]}>
+          <torusGeometry args={[0.25, 0.08, 12, 24]} />
+          <meshStandardMaterial color="#FACC15" emissive="#FACC15" emissiveIntensity={2} toneMapped={false} />
+        </mesh>
+      )}
       <group ref={cageRef}>
         {[-0.9, -0.45, 0, 0.45, 0.9].map((x) =>
           [-0.6, 0.6].map((z) => (

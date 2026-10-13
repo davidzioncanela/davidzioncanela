@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Mesh } from 'three';
 import { Projectile as ProjectileData, useGameStore } from '@/store/gameStore';
-import { findEnemyNear, playerRuntime } from '@/lib/gameRuntime';
+import { findEnemyNear, players } from '@/lib/gameRuntime';
 
 const CONFIG = {
   laser: { speed: 28, damage: 25, ttl: 0.6 },
@@ -35,15 +35,17 @@ function Projectile({ data }: { data: ProjectileData }) {
     let hit = false;
     if (data.owner === 'player') {
       const enemy = findEnemyNear(p.x, p.y, 0.6);
-      if (enemy) enemy.hit(cfg.damage, p.x - data.dir);
+      const boost = useGameStore.getState().damageBoostUntil > performance.now() ? 2 : 1;
+      if (enemy) enemy.hit(cfg.damage * boost, p.x - data.dir);
       hit = !!enemy;
     } else {
-      const pl = playerRuntime.position;
-      if (Math.abs(pl.x - p.x) < 0.5 && p.y > pl.y && p.y < pl.y + 1.4) {
-        hit = true;
-        const store = useGameStore.getState();
-        if (store.hurtPlayer()) playerRuntime.pendingKnockback = { x: data.dir * 6, y: 5, z: 0 };
-      }
+      players.forEach((pl) => {
+        if (hit || !pl.local) return;
+        if (Math.abs(pl.position.x - p.x) < 0.5 && p.y > pl.position.y && p.y < pl.position.y + 1.4) {
+          hit = true;
+          if (useGameStore.getState().hurtPlayer(pl.id)) pl.pendingImpulse = { x: data.dir * 6, y: 5, z: 0 };
+        }
+      });
     }
     if (hit || p.age > cfg.ttl * (data.owner === 'enemy' ? 2 : 1)) {
       p.done = true;

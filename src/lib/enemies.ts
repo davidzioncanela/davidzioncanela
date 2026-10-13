@@ -24,25 +24,49 @@ export const ENEMY_POWERS: Record<EnemyPowerId, EnemyPower> = {
   gigante: { id: 'gigante', label: 'Gigante', color: '#EF4444', health: 120, speed: 1.6, height: 2, attackCooldown: 1.6 },
 };
 
+export type EnemyEntry = 'left' | 'right' | 'sky' | 'ground';
+
 export interface EnemySpawn {
   id: string;
   name: string;
   power: EnemyPower;
   position: [number, number, number];
+  entry: EnemyEntry;
+  // Multiplicadores da dificuldade da sessão
+  healthScale: number;
+  attackSpeed: number;
 }
 
 const RANDOM_POWERS: EnemyPowerId[] = ['fogo', 'raio', 'veloz', 'saltador'];
 
+export function randomPower(): EnemyPowerId {
+  return RANDOM_POWERS[Math.floor(Math.random() * RANDOM_POWERS.length)];
+}
+
 // Cria um inimigo com nome e poder sorteados (ou poder fixo, ex.: chefe gigante)
-export function randomEnemy(id: string, position: [number, number, number], power?: EnemyPowerId): EnemySpawn {
-  const powerId = power ?? RANDOM_POWERS[Math.floor(Math.random() * RANDOM_POWERS.length)];
-  return { id, name: generateRandomNPCName(), power: ENEMY_POWERS[powerId], position };
+export function makeEnemy(
+  id: string,
+  position: [number, number, number],
+  entry: EnemyEntry,
+  powerId: EnemyPowerId,
+  scale: { health: number; attackSpeed: number }
+): EnemySpawn {
+  return { id, name: generateRandomNPCName(), power: ENEMY_POWERS[powerId], position, entry, healthScale: scale.health, attackSpeed: scale.attackSpeed };
+}
+
+// Uma leva da horda: vários inimigos chegando juntos por um mesmo lugar
+export interface WaveGroup {
+  // Segundos após o início da onda
+  delay: number;
+  from: EnemyEntry;
+  count: number;
+  power?: EnemyPowerId;
 }
 
 export interface Wave {
-  // A onda começa quando o jogador passa deste X
+  // A onda começa quando o primeiro jogador passa deste X
   triggerX: number;
-  // Limites da tela enquanto a onda estiver ativa (estilo Metal Slug)
-  lock: [number, number];
-  spawns: { position: [number, number, number]; power?: EnemyPowerId }[];
+  // Arena onde a tela trava (estilo Metal Slug): limites X e altura do chão
+  arena: { left: number; right: number; floorY: number };
+  groups: WaveGroup[];
 }

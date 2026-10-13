@@ -1,35 +1,38 @@
 'use client';
 
-import { TeamId, TEAMS } from '@/lib/characters';
+import { PartyPopper, RotateCcw, Users } from 'lucide-react';
+import { CHARACTERS, PlayerSlot, teamSetup } from '@/lib/characters';
 import { useGameStore } from '@/store/gameStore';
 
 interface VictoryScreenProps {
-  team: TeamId;
+  slots: PlayerSlot[];
   onRestart: () => void;
   onSelectTeam: () => void;
 }
 
-export function VictoryScreen({ team, onRestart, onSelectTeam }: VictoryScreenProps) {
-  const { leader, partner, captives } = TEAMS[team];
+export function VictoryScreen({ slots, onRestart, onSelectTeam }: VictoryScreenProps) {
   const score = useGameStore((s) => s.score);
+  const { captives } = teamSetup(slots);
+  const everyone = Object.values(CHARACTERS).map((c) => c.name);
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-green-400/80 to-blue-500/80 p-4 text-center text-white">
-      <h1 className="mb-4 text-5xl font-bold sm:text-6xl">PARABÉNS!</h1>
-      <p className="mb-4 text-2xl sm:text-3xl">
-        {captives[0].name} e {captives[1].name} foram resgatados!
-      </p>
-      <p className="mb-2 text-xl">
-        {leader.name}, {partner.name}, {captives[0].name} e {captives[1].name} podem brincar juntos na pracinha!
-      </p>
-      <p className="mb-8 text-lg">Pontuação: {score}</p>
-      <div className="flex gap-4">
-        <button className="rounded-lg bg-yellow-500 px-6 py-3 text-lg font-bold hover:bg-yellow-600" onClick={onRestart}>
-          JOGAR NOVAMENTE
-        </button>
-        <button className="rounded-lg bg-white/30 px-6 py-3 text-lg font-bold hover:bg-white/40" onClick={onSelectTeam}>
-          TROCAR TIME
-        </button>
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-sky-500/50 p-4 backdrop-blur-sm">
+      <div className="card-duo w-full max-w-lg p-8 text-center">
+        <PartyPopper className="mx-auto text-[#FFC800]" size={56} />
+        <h1 className="font-title text-5xl font-bold text-[#58CC02]">Parabéns!</h1>
+        <p className="mt-3 text-xl font-extrabold">
+          {captives.length ? `${captives.map((c) => c.name).join(' e ')} ${captives.length > 1 ? 'foram resgatados' : 'foi resgatado(a)'}!` : 'A chave da pracinha foi recuperada!'}
+        </p>
+        <p className="mt-2 font-bold text-gray-500">{everyone.join(', ').replace(/, ([^,]*)$/, ' e $1')} vão brincar juntos na pracinha!</p>
+        <p className="mb-6 mt-4 font-title text-2xl text-[#CE82FF]">{score} pontos</p>
+        <div className="flex flex-col gap-3">
+          <button className="btn-duo btn-green w-full" onClick={onRestart}>
+            <RotateCcw size={18} /> Jogar de novo
+          </button>
+          <button className="btn-duo btn-white w-full" onClick={onSelectTeam}>
+            <Users size={18} /> Trocar personagens
+          </button>
+        </div>
       </div>
     </div>
   );

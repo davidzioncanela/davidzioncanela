@@ -1,5 +1,7 @@
 'use client';
 
+import { RotateCcw, Users } from 'lucide-react';
+
 interface GameOverScreenProps {
   onRestart: () => void;
   onSelectTeam: () => void;
@@ -7,16 +9,18 @@ interface GameOverScreenProps {
 
 export function GameOverScreen({ onRestart, onSelectTeam }: GameOverScreenProps) {
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 p-4 text-white">
-      <h1 className="mb-4 text-5xl font-bold text-red-500 sm:text-6xl">GAME OVER</h1>
-      <p className="mb-8 text-xl">Não foi desta vez... Tente novamente!</p>
-      <div className="flex gap-4">
-        <button className="rounded-lg bg-red-500 px-6 py-3 text-lg font-bold hover:bg-red-600" onClick={onRestart}>
-          REINICIAR
-        </button>
-        <button className="rounded-lg bg-gray-600 px-6 py-3 text-lg font-bold hover:bg-gray-500" onClick={onSelectTeam}>
-          TROCAR TIME
-        </button>
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="card-duo w-full max-w-md p-8 text-center">
+        <h1 className="font-title text-5xl font-bold text-[#FF4B4B]">Game Over</h1>
+        <p className="mb-6 mt-2 text-lg font-bold text-gray-500">Não foi desta vez... Tentem de novo!</p>
+        <div className="flex flex-col gap-3">
+          <button className="btn-duo btn-green w-full" onClick={onRestart}>
+            <RotateCcw size={18} /> Tentar de novo
+          </button>
+          <button className="btn-duo btn-white w-full" onClick={onSelectTeam}>
+            <Users size={18} /> Trocar personagens
+          </button>
+        </div>
       </div>
     </div>
   );

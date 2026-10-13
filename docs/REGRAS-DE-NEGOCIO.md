@@ -30,6 +30,12 @@ Documento vivo com as regras do jogo. Atualize sempre que uma regra mudar.
 - Jogador 2: **setas** (andar/pular/agachar) + **K** ou **Enter** (atacar) + **L** (poder de ajuda).
 - Com 1 jogador, as duas configurações de teclas controlam o mesmo personagem e o parceiro vira companheiro automático.
 
+### 3.1.1 Tela dividida
+- Os jogadores podem se afastar livremente.
+- Quando se afastam muito (mais de 15 unidades), a tela **se divide** automaticamente: 2 jogadores ficam lado a lado e 3 ou 4 ficam em quadrantes.
+- Quando voltam a ficar perto (menos de 10 unidades), a tela volta a ser uma só.
+- Durante uma horda não há divisão: todos ficam na arena e quem ficou para trás é puxado para dentro dela.
+
 ### 3.2 Celular
 - No celular cada aparelho controla **apenas 1 personagem** (jogo individual por aparelho).
 - Vários celulares podem jogar juntos na mesma sessão online (até **4 jogadores**, um por personagem).
@@ -61,6 +67,20 @@ Documento vivo com as regras do jogo. Atualize sempre que uma regra mudar.
   - vida dos inimigos × (1 + 0,5 × (jogadores − 1));
   - +1 inimigo extra por onda para cada jogador além do primeiro;
   - inimigos atacam 10% mais rápido para cada jogador além do primeiro.
+
+### 4.2 Hordas (estilo Metal Slug)
+- Em pontos fixos da fase a tela **trava numa arena** e ninguém pode avançar até a horda acabar.
+- A horda chega em **levas** ao longo do tempo, muito maior que um encontro comum.
+- Os inimigos chegam por quatro lugares: **pela esquerda**, **pela direita**, **caindo do céu** e **saindo do chão**.
+- Quem sai do chão emerge devagar e só ataca quando está totalmente fora.
+- A última horda da fase traz o **chefe Gigante**; vencê-la abre a gaiola.
+
+### 4.3 Elementos de travessia dos mapas
+- **Cordas** com física: o personagem pula, se pendura e balança junto com a corda; pula de uma corda para outra.
+- **Canos para rastejar**: labirintos de encanamento gerados aleatoriamente, com subidas, descidas e escorregadores em diagonal (declive).
+- **Natação** em alguns mapas: dentro da água a gravidade diminui, o pulo vira braçada e há fôlego limitado.
+- **Galhos** e **barras horizontais**: o personagem se pendura e atravessa mão a mão.
+- **Portas** de entrada e saída ao longo do mapa, ligando áreas como num labirinto.
 
 ## 5. Poderes
 

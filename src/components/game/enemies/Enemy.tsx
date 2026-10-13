@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Group } from 'three';
+import { Sparkles } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, RapierRigidBody, useRapier } from '@react-three/rapier';
 import { useGameStore } from '@/store/gameStore';
-import { enemyRegistry, playerRuntime } from '@/lib/gameRuntime';
+import { enemyRegistry, nearestPlayer } from '@/lib/gameRuntime';
 import { EnemySpawn } from '@/lib/enemies';
 import { capsuleFor } from '@/lib/characters';
 import { CharacterModel } from '../characters/CharacterModel';
@@ -20,18 +22,22 @@ const RANGED_MAX = 9;
 
 // Inimigo com nome e poder próprios. Aparece durante uma onda e luta até ser derrotado.
 export function Enemy({ spawn, onDefeated }: EnemyProps) {
-  const { id, name, power } = spawn;
+  const { id, name, power, entry } = spawn;
+  const maxHealth = Math.round(power.health * spawn.healthScale);
+  const cooldown = power.attackCooldown / spawn.attackSpeed;
+  // Quem sai do chão emerge devagar; os outros já chegam lutando
+  const modelRef = useRef<Group>(null);
   const bodyRef = useRef<RapierRigidBody>(null);
   const { world, rapier } = useRapier();
   const [animation, setAnimation] = useState('Idle');
   const [facing, setFacing] = useState<1 | -1>(-1);
   const [dead, setDead] = useState(false);
   const capsule = capsuleFor(power.height);
-  const state = useRef({ health: power.health, attackTimer: 2 + Math.random(), hurtTimer: 0, actionAnim: 0 });
+  const state = useRef({ health: maxHealth, attackTimer: 2 + Math.random(), hurtTimer: 0, actionAnim: 0, emerge: entry === 'ground' ? 1 : 0 });
 
   useEffect(() => {
     const s = state.current;
-    const hud = { id, name, power: power.label, color: power.color, maxHealth: power.health };
+    const hud = { id, name, power: power.label, color: power.color, maxHealth };
     useGameStore.getState().upsertEnemy({ ...hud, health: s.health });
     enemyRegistry.set(id, {
       getPosition: () => bodyRef.current?.translation() ?? { x: spawn.position[0], y: spawn.position[1], z: 0 },
@@ -52,7 +58,7 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
       enemyRegistry.delete(id);
       useGameStore.getState().removeEnemy(id);
     };
-  }, [id, name, power, spawn.position]);
+  }, [id, name, power, maxHealth, spawn.position]);
 
   useFrame((_, delta) => {
     const body = bodyRef.current;
@@ -72,7 +78,17 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
       return;
     }
 
-    const player = playerRuntime.position;
+    // Saindo do chão: sobe aos poucos e ainda não ataca
+    if (s.emerge > 0) {
+      s.emerge = Math.max(0, s.emerge - delta * 1.2);
+      if (modelRef.current) modelRef.current.position.y = -power.height * s.emerge;
+      body.setLinvel({ x: 0, y: vel.y, z: 0 }, true);
+      return;
+    }
+
+    const target = nearestPlayer(pos.x, pos.y);
+    if (!target) return;
+    const player = target.position;
     const dx = player.x - pos.x;
     const dist = Math.hypot(dx, player.y - pos.y);
     const dir = (Math.sign(dx) || 1) as 1 | -1;
@@ -97,7 +113,7 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
       if (Math.abs(dx) < RANGED_MIN && groundAhead) vx = -dir * power.speed;
       else if (Math.abs(dx) > RANGED_MAX - 2 && groundAhead) vx = dir * power.speed;
       if (dist < RANGED_MAX && s.attackTimer <= 0) {
-        s.attackTimer = power.attackCooldown;
+        s.attackTimer = cooldown;
         s.actionAnim = 0.5;
         useGameStore.getState().spawnProjectile({ kind: power.ranged, x: pos.x + dir * 0.6, y: pos.y + power.height * 0.6, dir, owner: 'enemy' });
       }
@@ -107,12 +123,12 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
       if (power.jumps && grounded && s.attackTimer <= 0 && dist < 6) {
         vy = 9;
         vx = dir * power.speed * 1.5;
-        s.attackTimer = power.attackCooldown;
+        s.attackTimer = cooldown;
       }
       if (dist < MELEE_RANGE + (power.height - 1.2) * 0.5 && s.attackTimer <= 0) {
-        s.attackTimer = power.attackCooldown;
+        s.attackTimer = cooldown;
         s.actionAnim = 0.5;
-        if (useGameStore.getState().hurtPlayer()) playerRuntime.pendingKnockback = { x: dir * 7, y: 6, z: 0 };
+        if (target.local && useGameStore.getState().hurtPlayer(target.id)) target.pendingImpulse = { x: dir * 7, y: 6, z: 0 };
       }
     }
     if (power.jumps && !grounded) vx = vel.x;
@@ -138,7 +154,12 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
     >
       {!dead && <CapsuleCollider args={[capsule.halfHeight, capsule.radius]} position={[0, capsule.centerY, 0]} />}
       {dead && <CapsuleCollider args={[0.05, 0.2]} position={[0, 0.2, 0]} />}
-      <CharacterModel model="rogueHooded" animation={animation} accessories={ROGUE_GEAR} facing={facing} height={power.height} />
+      <group ref={modelRef} position={[0, entry === 'ground' ? -power.height : 0, 0]}>
+        <CharacterModel model="rogueHooded" animation={animation} accessories={ROGUE_GEAR} facing={facing} height={power.height} />
+      </group>
+      {/* Efeito de entrada: poeira saindo do chão ou rastro caindo do céu */}
+      {entry === 'ground' && !dead && <Sparkles count={30} scale={[1.5, 0.6, 1.5]} position={[0, 0.2, 0]} size={8} speed={2} color="#A16207" />}
+      {entry === 'sky' && !dead && <Sparkles count={20} scale={[0.6, 2.5, 0.6]} position={[0, 1.5, 0]} size={6} speed={3} color={power.color} />}
       {/* Aura com a cor do poder */}
       {!dead && (
         <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
