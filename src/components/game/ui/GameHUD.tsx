@@ -24,7 +24,7 @@ export function GameHUD() {
       </div>
       <div className="flex items-center justify-center">
         <div className="rounded-lg bg-black/50 px-6 py-3 text-lg backdrop-blur-sm">
-          <span className="font-bold">Dávid</span> & <span className="font-bold">Yohann</span> | Laura precisa ser resgatada!
+          <span className="font-bold text-yellow-300">Super Zion Brothers</span> | <span className="font-bold">Dávid</span> & <span className="font-bold">Yohann</span> | Laura precisa ser resgatada!
         </div>
       </div>
     </div>

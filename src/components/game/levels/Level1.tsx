@@ -73,9 +73,9 @@ export function Level1({ gameState, setGameState, setDialogText, onPlayerPositio
         playerPosition={playerPosition}
       />
 
-      <David position={[-12, 11, 0]} onPowerUpChange={setActivePowerUp} onPositionChange={onPlayerPositionChange} />
-      <Yohann position={[-9, 11, 0]} onPositionChange={onPlayerPositionChange} />
-      <Lara position={[-7, 11, 0]} onPositionChange={onPlayerPositionChange} />
+      <David position={[-12, 16, 0]} onPowerUpChange={setActivePowerUp} onPositionChange={onPlayerPositionChange} />
+      <Yohann position={[-6, 14, 0]} />
+      <Lara position={[0, 12, 0]} />
     </group>
   );
 }

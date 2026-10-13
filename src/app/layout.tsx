@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Dávid & Yohann: Resgatando Laura',
-  description: 'Jogo 2D estilo plataforma misturado com 3D - Super Mario Bros inspirado',
+  title: 'Super Zion Brothers',
+  description: 'Jogo 2D estilo plataforma misturado com 3D - Super Zion Brothers',
 };
 
 export default function RootLayout({

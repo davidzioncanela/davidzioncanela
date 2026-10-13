@@ -3,7 +3,7 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier } from '@react-three/rapier';
-import { Mesh, Vector3, Ray } from 'three';
+import { Mesh, Vector3 } from 'three';
 import { useInput } from '@/contexts/InputContext';
 
 interface LaraProps {
@@ -13,7 +13,7 @@ interface LaraProps {
 
 export function Lara({ position = [2, 1, 0], onPositionChange }: LaraProps) {
   const bodyRef = useRef<any>(null);
-  const { world } = useRapier();
+  const { world, rapier } = useRapier();
   const { keys } = useInput();
 
   useFrame(() => {
@@ -21,8 +21,8 @@ export function Lara({ position = [2, 1, 0], onPositionChange }: LaraProps) {
     if (!body) return;
 
     const origin = body.translation();
-    const ray = new Ray(origin, new Vector3(0, -1, 0));
-    const hit = (world as any).castRay(ray as any, 0.9, true);
+    const ray = new rapier.Ray(origin, { x: 0, y: -1, z: 0 });
+    const hit = world.castRay(ray, 0.9, true, undefined, undefined, undefined, body);
 
     const pos = body.translation();
     const vel = body.linvel();

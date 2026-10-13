@@ -19,6 +19,7 @@ interface CloudPlatformProps {
 
 export function CloudPlatform({ position, scale = [3, 0.4, 3], animated = false, speed = 0.5, targetY, delay = 0, float = false, floatSpeed = 0.6, floatRange = 0.4 }: CloudPlatformProps) {
   const groupRef = useRef<any>(null);
+  const currentY = useRef(position[1]);
   const startY = useRef(position[1]);
   const startTime = useRef(delay);
   const started = useRef(!animated);
@@ -30,37 +31,34 @@ export function CloudPlatform({ position, scale = [3, 0.4, 3], animated = false,
         if (startTime.current <= 0) started.current = true;
         return;
       }
-      if (targetY !== undefined && groupRef.current.position.y > targetY) {
-        groupRef.current.position.y -= speed * delta;
-        if (groupRef.current.position.y < targetY) {
-          groupRef.current.position.y = targetY;
-          startY.current = targetY;
-        }
+      if (targetY !== undefined && startY.current > targetY) {
+        startY.current = Math.max(targetY, startY.current - speed * delta);
       }
     }
-    if (float && groupRef.current && started.current) {
-      groupRef.current.position.y = startY.current + Math.sin(state.clock.elapsedTime * floatSpeed + position[0]) * floatRange;
+    currentY.current = startY.current;
+    if (float && started.current) {
+      currentY.current += Math.sin(state.clock.elapsedTime * floatSpeed + position[0]) * floatRange;
     }
+    // Move o corpo cinemático para que colisor e visual andem juntos
+    groupRef.current?.setNextKinematicTranslation({ x: position[0], y: currentY.current, z: position[2] });
   });
 
   return (
-    <group ref={groupRef} position={position}>
-      <RigidBody type="fixed" colliders={false}>
-        <CuboidCollider args={[scale[0] / 2, scale[1] / 2, scale[2] / 2]} />
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={scale} />
-          <meshStandardMaterial color="#F8FAFC" opacity={0.95} transparent emissive="#E0F2FE" emissiveIntensity={0.2} />
-        </mesh>
-        {/* Detalhe de nuvem/ilhas flutuantes estilo DBZ */}
-        <mesh position={[scale[0]*0.15, scale[1]/2, -scale[2]*0.2]} scale={[0.4, 0.3, 0.4]}>
-          <sphereGeometry args={[1, 8, 6]} />
-          <meshStandardMaterial color="#FFFFFF" opacity={0.9} transparent />
-        </mesh>
-        <mesh position={[-scale[0]*0.2, scale[1]/2, scale[2]*0.15]} scale={[0.5, 0.35, 0.5]}>
-          <sphereGeometry args={[1, 8, 6]} />
-          <meshStandardMaterial color="#FFFFFF" opacity={0.9} transparent />
-        </mesh>
-      </RigidBody>
-    </group>
+    <RigidBody ref={groupRef} type="kinematicPosition" position={position} colliders={false}>
+      <CuboidCollider args={[scale[0] / 2, scale[1] / 2, scale[2] / 2]} />
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={scale} />
+        <meshStandardMaterial color="#F8FAFC" opacity={0.95} transparent emissive="#E0F2FE" emissiveIntensity={0.2} />
+      </mesh>
+      {/* Detalhe de nuvem/ilhas flutuantes estilo DBZ */}
+      <mesh position={[scale[0]*0.15, scale[1]/2, -scale[2]*0.2]} scale={[0.4, 0.3, 0.4]}>
+        <sphereGeometry args={[1, 8, 6]} />
+        <meshStandardMaterial color="#FFFFFF" opacity={0.9} transparent />
+      </mesh>
+      <mesh position={[-scale[0]*0.2, scale[1]/2, scale[2]*0.15]} scale={[0.5, 0.35, 0.5]}>
+        <sphereGeometry args={[1, 8, 6]} />
+        <meshStandardMaterial color="#FFFFFF" opacity={0.9} transparent />
+      </mesh>
+    </RigidBody>
   );
 }

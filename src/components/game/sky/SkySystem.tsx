@@ -10,8 +10,9 @@ export function SkySystem() {
   const cloud1Ref = useRef<Mesh>(null);
   const cloud2Ref = useRef<Mesh>(null);
   const cloud3Ref = useRef<Mesh>(null);
-  const time = useRef(0);
   const cycleDuration = 1440;
+  // Começa ao meio-dia para a cena iniciar bem iluminada
+  const time = useRef(cycleDuration / 4);
 
   useFrame((state, delta) => {
     time.current += delta;

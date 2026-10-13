@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, CapsuleCollider, useRapier } from '@react-three/rapier';
-import { Mesh, Vector3, Ray } from 'three';
+import { Mesh, Vector3 } from 'three';
 import { useInput } from '@/contexts/InputContext';
 
 interface DavidProps {
@@ -19,7 +19,7 @@ export function David({ position = [0, 1, 0], onPowerUpChange, onPositionChange 
   const [crouchTimer, setCrouchTimer] = useState(0);
   const [isCrouching, setIsCrouching] = useState(false);
   const [activePowerUp, setActivePowerUp] = useState<string | null>(null);
-  const { world } = useRapier();
+  const { world, rapier } = useRapier();
   const { keys } = useInput();
 
   useFrame((state, delta) => {
@@ -39,8 +39,8 @@ export function David({ position = [0, 1, 0], onPowerUpChange, onPositionChange 
     body.applyImpulse(impulse, true);
 
     const origin = body.translation();
-    const ray = new Ray(origin, new Vector3(0, -1, 0));
-    const hit = (world as any).castRay(ray as any, 1.3, true);
+    const ray = new rapier.Ray(origin, { x: 0, y: -1, z: 0 });
+    const hit = world.castRay(ray, 1.3, true, undefined, undefined, undefined, body);
     setIsGrounded(!!hit);
 
     if ((keys.current[' '] || keys.current['ArrowUp']) && isGrounded) {
