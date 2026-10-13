@@ -4,22 +4,21 @@ import { useEffect, useState } from 'react';
 import { MobileControls } from './MobileControls';
 import { useInput } from '@/contexts/InputContext';
 
-export function DeviceDetector() {
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const { setKey } = useInput();
-
+// Detecta aparelho de toque (celular/tablet)
+export function useIsTouch() {
+  const [isTouch, setIsTouch] = useState(false);
   useEffect(() => {
-    const checkTouchDevice = () => {
-      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
-      setIsTouchDevice(hasTouch || isCoarsePointer);
-    };
-    checkTouchDevice();
-    window.addEventListener('resize', checkTouchDevice);
-    return () => window.removeEventListener('resize', checkTouchDevice);
+    const check = () => setIsTouch(window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
   }, []);
+  return isTouch;
+}
 
-  if (!isTouchDevice) return null;
-
+export function DeviceDetector() {
+  const isTouch = useIsTouch();
+  const { setKey } = useInput();
+  if (!isTouch) return null;
   return <MobileControls onPress={setKey} />;
 }

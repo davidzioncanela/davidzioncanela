@@ -7,7 +7,12 @@ const config: Config = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        game: ['Nunito', 'system-ui', 'sans-serif'],
+        title: ['Fredoka', 'Nunito', 'system-ui', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 };

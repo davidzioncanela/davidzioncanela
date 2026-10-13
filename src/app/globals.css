@@ -2,19 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 135, 206, 235;
-  --background-end-rgb: 152, 251, 152;
+body {
+  color: #1f2937;
+  background: #7dd3fc;
+  overflow: hidden;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
-  overflow: hidden;
+@layer components {
+  /* Botões no estilo Duolingo: cantos arredondados, cores vivas e borda inferior que afunda ao clicar */
+  .btn-duo {
+    @apply relative inline-flex select-none items-center justify-center gap-2 rounded-2xl border-2 px-6 py-3 font-game text-base font-extrabold uppercase tracking-wide transition-all duration-75;
+    border-bottom-width: 5px;
+  }
+  .btn-duo:active:not(:disabled) {
+    border-bottom-width: 2px;
+    transform: translateY(3px);
+  }
+  .btn-duo:disabled {
+    @apply cursor-not-allowed border-gray-300 bg-gray-200 text-gray-400;
+  }
+  .btn-green {
+    @apply border-[#58A700] bg-[#58CC02] text-white hover:brightness-105;
+  }
+  .btn-blue {
+    @apply border-[#1899D6] bg-[#1CB0F6] text-white hover:brightness-105;
+  }
+  .btn-yellow {
+    @apply border-[#E5A500] bg-[#FFC800] text-[#4B3500] hover:brightness-105;
+  }
+  .btn-red {
+    @apply border-[#EA2B2B] bg-[#FF4B4B] text-white hover:brightness-105;
+  }
+  .btn-purple {
+    @apply border-[#A560E8] bg-[#CE82FF] text-white hover:brightness-105;
+  }
+  .btn-white {
+    @apply border-[#E5E5E5] bg-white text-[#4B4B4B] hover:bg-gray-50;
+  }
+  /* Cartão branco com borda grossa, mesmo idioma visual dos botões */
+  .card-duo {
+    @apply rounded-3xl border-2 border-[#E5E5E5] bg-white text-[#4B4B4B];
+    border-bottom-width: 5px;
+  }
+  .hud-pill {
+    @apply flex items-center gap-2 rounded-2xl border-2 border-white/60 bg-white/85 px-3 py-1.5 font-extrabold text-[#4B4B4B] shadow-lg backdrop-blur;
+    border-bottom-width: 4px;
+  }
+  .title-game {
+    @apply font-title font-bold text-[#FFC800];
+    -webkit-text-stroke: 3px #4B3500;
+    paint-order: stroke fill;
+    text-shadow: 0 6px 0 #4B3500;
+  }
 }

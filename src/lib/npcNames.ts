@@ -27,7 +27,7 @@ export const npcLastNames = [
   'Furioso',
   'Malvado',
   'Ágil',
-  'Gigante',
+  'Grandalhão',
   'Veloz',
   'Terrível',
   'Sorrateiro',

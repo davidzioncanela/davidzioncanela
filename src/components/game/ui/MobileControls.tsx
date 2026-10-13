@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ChevronDown, Sword, Zap } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BedDouble, ChevronDown, Music, Sword, Zap } from 'lucide-react';
 
 interface MobileControlsProps {
   onPress: (key: string, pressed: boolean) => void;
@@ -72,6 +72,27 @@ export function MobileControls({ onPress }: MobileControlsProps) {
 
       {/* Ações - Direito */}
       <div className="absolute bottom-8 right-6 flex flex-col items-end gap-4">
+        {/* Ações-prêmio: deitar e dançar */}
+        <div className="flex gap-3">
+          <button
+            className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border-2 border-gray-800 bg-violet-400 shadow-[0_4px_0_0_rgba(0,0,0,1)] transition active:translate-y-1 active:shadow-[0_0_0_0_rgba(0,0,0,1)]"
+            onTouchStart={(e) => handleTouchStart(e, 'x')}
+            onTouchEnd={(e) => handleTouchEnd(e, 'x')}
+            onTouchCancel={(e) => handleTouchEnd(e, 'x')}
+            aria-label="Deitar"
+          >
+            <BedDouble size={18} className="text-white" />
+          </button>
+          <button
+            className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border-2 border-gray-800 bg-pink-400 shadow-[0_4px_0_0_rgba(0,0,0,1)] transition active:translate-y-1 active:shadow-[0_0_0_0_rgba(0,0,0,1)]"
+            onTouchStart={(e) => handleTouchStart(e, 'b')}
+            onTouchEnd={(e) => handleTouchEnd(e, 'b')}
+            onTouchCancel={(e) => handleTouchEnd(e, 'b')}
+            aria-label="Dançar"
+          >
+            <Music size={18} className="text-white" />
+          </button>
+        </div>
         <button
           className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full border-2 border-gray-800 bg-blue-400 shadow-[0_4px_0_0_rgba(0,0,0,1)] transition active:translate-y-1 active:shadow-[0_0_0_0_rgba(0,0,0,1)]"
           onTouchStart={(e) => handleTouchStart(e, 'e')}

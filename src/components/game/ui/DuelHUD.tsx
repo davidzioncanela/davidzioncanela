@@ -1,33 +1,37 @@
 'use client';
 
 import { useGameStore } from '@/store/gameStore';
-import { Heart } from 'lucide-react';
+import { Swords } from 'lucide-react';
 
+const MAX_SHOWN = 6;
+const MAX_SHOWN_SMALL = 2;
+
+// Contador da horda + mini barras de vida dos inimigos mais próximos de acabar
 export function DuelHUD() {
-  const { isDuelActive, currentNPC } = useGameStore();
+  const enemies = useGameStore((s) => s.enemies);
+  const locked = useGameStore((s) => s.screenLock !== null);
+  if (!locked && enemies.length === 0) return null;
 
-  if (!isDuelActive || !currentNPC) return null;
-
-  const healthPercent = (currentNPC.health / currentNPC.maxHealth) * 100;
+  const small = typeof window !== 'undefined' && window.innerWidth < 640;
+  const shown = [...enemies].sort((a, b) => a.health / a.maxHealth - b.health / b.maxHealth).slice(0, small ? MAX_SHOWN_SMALL : MAX_SHOWN);
 
   return (
-    <div className="absolute top-6 left-1/2 z-50 -translate-x-1/2 transform">
-      <div className="rounded-xl border-4 border-red-600 bg-black/90 px-8 py-4 shadow-2xl">
-        <div className="mb-2 text-center text-sm font-bold uppercase tracking-widest text-red-400">
-          DUEL - {currentNPC.name}
-        </div>
-        <div className="flex items-center gap-3">
-          <Heart className="fill-red-500 text-red-500" size={20} />
-          <div className="h-4 w-64 overflow-hidden rounded-full bg-gray-700">
-            <div
-              className="h-full bg-gradient-to-r from-red-500 to-orange-400 transition-all duration-300"
-              style={{ width: `${healthPercent}%` }}
-            />
+    <div className="pointer-events-none absolute left-1/2 top-3 z-40 flex w-[min(60vw,560px)] -translate-x-1/2 flex-col items-center gap-2">
+      <div className="hud-pill animate-pulse bg-[#FF4B4B]/90 text-sm text-white">
+        <Swords size={16} /> HORDA! {enemies.length} {enemies.length === 1 ? 'inimigo' : 'inimigos'}
+      </div>
+      <div className="grid w-full grid-cols-2 gap-1.5 sm:grid-cols-3">
+        {shown.map((e) => (
+          <div key={e.id} className="rounded-xl border-2 border-b-4 border-white/70 bg-white/85 px-2 py-1 backdrop-blur">
+            <div className="flex items-center justify-between gap-1 text-[10px] font-extrabold text-gray-700">
+              <span className="truncate">{e.name}</span>
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: e.color }} title={e.power} />
+            </div>
+            <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-gray-200">
+              <div className="h-full rounded-full bg-[#FF4B4B] transition-all duration-300" style={{ width: `${(e.health / e.maxHealth) * 100}%` }} />
+            </div>
           </div>
-          <span className="text-sm font-bold text-white">
-            {currentNPC.health}/{currentNPC.maxHealth}
-          </span>
-        </div>
+        ))}
       </div>
     </div>
   );

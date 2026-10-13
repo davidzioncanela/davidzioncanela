@@ -4,41 +4,58 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useRef } from 'react';
 import * as THREE from 'three';
 import { GameState } from './GameCanvas';
+import { playerSpan, players } from '@/lib/gameRuntime';
+import { useGameStore } from '@/store/gameStore';
 
 interface CameraControllerProps {
   gameState: GameState;
-  playerPosition?: [number, number, number];
-  playerVelocity?: [number, number, number];
+  // Limites horizontais da fase (restrição de avanço de tela)
+  bounds: [number, number];
 }
 
-export function CameraController({ gameState, playerPosition = [0, 5, 10], playerVelocity = [0, 0, 0] }: CameraControllerProps) {
+// Câmera lateral estilo Metal Slug: enquadra os jogadores deste aparelho,
+// olha à frente, trava na arena durante as hordas e aproxima nos diálogos
+export function CameraController({ gameState, bounds }: CameraControllerProps) {
   const camera = useThree((state) => state.camera);
-  const targetPosition = useRef(new THREE.Vector3(0, 5, 10));
-  const targetLookAt = useRef(new THREE.Vector3(0, 0, 0));
+  const size = useThree((state) => state.size);
+  const target = useRef(new THREE.Vector3(-12, 14, 12));
+  const lookAt = useRef(new THREE.Vector3(-12, 12, 0));
+  const desiredLook = useRef(new THREE.Vector3());
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') (window as unknown as { __camera: THREE.Camera }).__camera = camera;
 
-  useFrame(() => {
-    const [px, py, pz] = playerPosition;
-    const [vx, vy, vz] = playerVelocity;
-    const velocityX = Math.abs(vx);
+  useFrame((_, delta) => {
+    const span = playerSpan(true);
+    if (!span) return;
+    const lock = useGameStore.getState().screenLock;
 
-    if (gameState === 'duel') {
-      // Metal Slug style - zoom focado no duelo
-      targetPosition.current.set(px, py + 2, pz + 6);
-      targetLookAt.current.set(px, py + 1, pz);
+    let vx = 0;
+    players.forEach((p) => {
+      if (p.local) vx += p.velocity.x;
+    });
+    const lookAhead = THREE.MathUtils.clamp(vx * 0.4, -2.5, 2.5);
+    const spread = span.maxX - span.minX;
+
+    let cx = THREE.MathUtils.clamp(span.centerX + lookAhead, bounds[0], bounds[1]);
+    let distance = 9 + spread * 0.55;
+    let height = 2;
+    if (lock) {
+      // Na horda a câmera mostra a arena inteira
+      cx = (lock[0] + lock[1]) / 2;
+      distance = Math.max(9, (lock[1] - lock[0]) * 0.8);
+      height = 3;
     } else if (gameState === 'dialog') {
-      // Zoom suave durante diálogo
-      targetPosition.current.set(px, py + 3, pz + 7);
-      targetLookAt.current.set(px, py + 1, pz);
-    } else {
-      // Modo normal - follow lateral estilo Metal Slug
-      const offsetX = vx > 0.5 ? 3 : vx < -0.5 ? -3 : 0;
-      const lookAheadX = vx * 0.5;
-      targetPosition.current.set(px + offsetX, py + 3, px > 0 ? px / 2 + 8 : 8);
-      targetLookAt.current.set(px + lookAheadX, py, pz);
+      distance = 8;
     }
 
-    camera.position.lerp(targetPosition.current, 0.08);
-    camera.lookAt(targetLookAt.current.lerp(new THREE.Vector3(px + (vx > 0 ? 2 : vx < 0 ? -2 : 0), py, pz), 0.05));
+    // Tela em pé (celular): afasta a câmera para caber a mesma largura de cena
+    const aspect = size.width / Math.max(1, size.height);
+    distance *= THREE.MathUtils.clamp(1.3 / aspect, 1, 2.2);
+
+    target.current.set(cx, span.avgY + height, distance);
+    const t = 1 - Math.pow(0.02, delta);
+    camera.position.lerp(target.current, t);
+    lookAt.current.lerp(desiredLook.current.set(cx, span.avgY + 1, 0), t);
+    camera.lookAt(lookAt.current);
   });
 
   return null;

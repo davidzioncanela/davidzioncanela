@@ -1,17 +1,50 @@
 'use client';
 
-export function VictoryScreen() {
+import { ArrowRight, PartyPopper, RotateCcw, Users } from 'lucide-react';
+import { CHARACTERS, PlayerSlot, teamSetup } from '@/lib/characters';
+import { useGameStore } from '@/store/gameStore';
+
+interface VictoryScreenProps {
+  slots: PlayerSlot[];
+  onRestart?: () => void;
+  onNext?: () => void;
+  // Convidado online esperando o anfitrião avançar
+  waiting?: boolean;
+  onSelectTeam: () => void;
+}
+
+export function VictoryScreen({ slots, onRestart, onNext, waiting, onSelectTeam }: VictoryScreenProps) {
+  const score = useGameStore((s) => s.score);
+  const { captives } = teamSetup(slots);
+  const everyone = Object.values(CHARACTERS).map((c) => c.name);
+
   return (
-    <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-b from-green-400/80 to-blue-500/80 text-white">
-      <h1 className="mb-4 text-6xl font-bold">PARABÉNS!</h1>
-      <p className="mb-4 text-3xl">Laura foi resgatada!</p>
-      <p className="mb-8 text-xl">Dávid e Yohann podem brincar juntos na pracinha!</p>
-      <button
-        className="rounded-lg bg-yellow-500 px-8 py-4 text-xl font-bold hover:bg-yellow-600"
-        onClick={() => window.location.reload()}
-      >
-        JOGAR NOVAMENTE
-      </button>
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-sky-500/50 p-4 backdrop-blur-sm">
+      <div className="card-duo w-full max-w-lg p-8 text-center">
+        <PartyPopper className="mx-auto text-[#FFC800]" size={56} />
+        <h1 className="font-title text-5xl font-bold text-[#58CC02]">Parabéns!</h1>
+        <p className="mt-3 text-xl font-extrabold">
+          {captives.length ? `${captives.map((c) => c.name).join(' e ')} ${captives.length > 1 ? 'foram resgatados' : 'foi resgatado(a)'}!` : 'A chave da pracinha foi recuperada!'}
+        </p>
+        <p className="mt-2 font-bold text-gray-500">{everyone.join(', ').replace(/, ([^,]*)$/, ' e $1')} vão brincar juntos na pracinha!</p>
+        <p className="mb-6 mt-4 font-title text-2xl text-[#CE82FF]">{score} pontos</p>
+        <div className="flex flex-col gap-3">
+          {onNext && (
+            <button className="btn-duo btn-green w-full" onClick={onNext}>
+              Próxima fase <ArrowRight size={18} />
+            </button>
+          )}
+          {waiting && <div className="rounded-2xl bg-[#DDF4FF] px-4 py-3 text-sm font-extrabold text-[#1899D6]">Esperando o anfitrião ir para a próxima fase...</div>}
+          {onRestart && (
+            <button className={`btn-duo w-full ${onNext ? 'btn-white' : 'btn-green'}`} onClick={onRestart}>
+              <RotateCcw size={18} /> Jogar de novo
+            </button>
+          )}
+          <button className="btn-duo btn-white w-full" onClick={onSelectTeam}>
+            <Users size={18} /> Voltar para a cidade
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

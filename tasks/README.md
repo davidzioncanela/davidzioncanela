@@ -1,4 +1,4 @@
-# Tasklist - Mario 2D
+# Tasklist - Super Zion Brothers
 
 ## Fase 1: Criar estrutura básica
 - [x] Criar index.html

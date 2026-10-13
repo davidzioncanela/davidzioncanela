@@ -27,7 +27,7 @@ export function TextBoxTrigger({ position, text, setGameState, setDialogText, on
       <CuboidCollider
         args={[2, 2, 2]}
         sensor
-        onIntersectionEnter={() => handleTrigger()}
+        onIntersectionEnter={({ other }) => other.rigidBodyObject?.userData?.player && handleTrigger()}
       />
       <mesh visible={!triggered}>
         <boxGeometry args={[0.5, 0.3, 0.5]} />
