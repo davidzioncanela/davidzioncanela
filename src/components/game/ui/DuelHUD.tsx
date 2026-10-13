@@ -11,7 +11,7 @@ export function DuelHUD() {
   const healthPercent = (currentNPC.health / currentNPC.maxHealth) * 100;
 
   return (
-    <div className="absolute top-6 left-1/2 z-50 -translate-x-1/2 transform">
+    <div className="absolute top-20 left-1/2 z-50 -translate-x-1/2 transform">
       <div className="rounded-xl border-4 border-red-600 bg-black/90 px-8 py-4 shadow-2xl">
         <div className="mb-2 text-center text-sm font-bold uppercase tracking-widest text-red-400">
           DUEL - {currentNPC.name}
