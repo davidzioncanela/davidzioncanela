@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { CharacterId } from '@/lib/characters';
+import type { NetWorld } from '@/lib/protocol';
+import { isGuest, sendEvent } from '@/lib/net';
 
 export type PowerUpType = 'laser' | 'super-speed' | 'float' | 'fire-ball' | 'super-jump';
 
@@ -23,6 +25,8 @@ export interface Projectile {
   y: number;
   dir: 1 | -1;
   owner: 'player' | 'enemy';
+  // Projétil de outro aparelho: só aparece, quem calcula o dano é quem atirou
+  visual?: boolean;
 }
 
 // Estado de cada jogador exibido no HUD
@@ -51,6 +55,8 @@ interface GameState {
   // Trava de tela durante uma onda: ninguém passa destes limites
   screenLock: [number, number] | null;
   projectiles: Projectile[];
+  // Moedas e caixas já pegas (somem em todos os aparelhos da sessão)
+  pickedUp: string[];
 }
 
 interface GameActions {
@@ -71,6 +77,9 @@ interface GameActions {
   setScreenLock: (lock: [number, number] | null) => void;
   spawnProjectile: (p: Omit<Projectile, 'id'>) => void;
   removeProjectile: (id: number) => void;
+  markPicked: (key: string) => void;
+  // Convidado online: copia o placar e a horda enviados pelo host
+  applyWorld: (world: NetWorld) => void;
   reset: (playerIds: CharacterId[]) => void;
 }
 
@@ -85,6 +94,7 @@ const initialState: GameState = {
   enemies: [],
   screenLock: null,
   projectiles: [],
+  pickedUp: [],
 };
 
 let nextProjectileId = 1;
@@ -98,8 +108,14 @@ export const useGameStore = create<GameState & GameActions>((set, get) => {
   return {
     ...initialState,
     addScore: (points) => set((state) => ({ score: state.score + points })),
-    loseLife: () => set((state) => ({ lives: Math.max(0, state.lives - 1) })),
-    gainLife: () => set((state) => ({ lives: Math.min(MAX_LIVES, state.lives + 1) })),
+    loseLife: () => {
+      if (isGuest()) sendEvent({ type: 'life', delta: -1 });
+      set((state) => ({ lives: Math.max(0, state.lives - 1) }));
+    },
+    gainLife: () => {
+      if (isGuest()) sendEvent({ type: 'life', delta: 1 });
+      set((state) => ({ lives: Math.min(MAX_LIVES, state.lives + 1) }));
+    },
     hurtPlayer: (id) => {
       const now = performance.now();
       const p = get().players[id] ?? emptyPlayer();
@@ -109,7 +125,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => {
         return false;
       }
       patchPlayer(id, { invulnerableUntil: now + INVULNERABLE_MS });
-      set((state) => ({ lives: Math.max(0, state.lives - 1) }));
+      get().loseLife();
       return true;
     },
     setPowerUp: (id, powerUp) => {
@@ -138,7 +154,21 @@ export const useGameStore = create<GameState & GameActions>((set, get) => {
     },
     giveShield: (id, seconds) => patchPlayer(id, { shieldUntil: performance.now() + seconds * 1000 }),
     boostDamage: (seconds) => set({ damageBoostUntil: performance.now() + seconds * 1000 }),
-    addCoin: () => set((state) => ({ collectedCoins: state.collectedCoins + 1, score: state.score + 100 })),
+    addCoin: () => {
+      if (isGuest()) sendEvent({ type: 'coin' });
+      set((state) => ({ collectedCoins: state.collectedCoins + 1, score: state.score + 100 }));
+    },
+    markPicked: (key) => set((state) => (state.pickedUp.includes(key) ? state : { pickedUp: [...state.pickedUp, key] })),
+    applyWorld: (world) =>
+      set({
+        lives: world.lives,
+        score: world.score,
+        collectedCoins: world.coins,
+        screenLock: world.lock,
+        enemies: world.enemies
+          .filter((e) => !e.dead)
+          .map((e) => ({ id: e.id, name: e.name, power: e.power, color: e.color, health: e.health, maxHealth: e.maxHealth })),
+      }),
     upsertEnemy: (enemy) =>
       set((state) => ({
         enemies: state.enemies.some((e) => e.id === enemy.id) ? state.enemies.map((e) => (e.id === enemy.id ? enemy : e)) : [...state.enemies, enemy],
@@ -162,4 +192,9 @@ export const useGameStore = create<GameState & GameActions>((set, get) => {
 export function difficulty(playerCount: number) {
   const extra = Math.max(0, playerCount - 1);
   return { health: 1 + 0.5 * extra, extraEnemies: extra, attackSpeed: 1 + 0.1 * extra };
+}
+
+// Acesso de depuração pelo console do navegador (só em desenvolvimento)
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  (window as unknown as { __store: typeof useGameStore }).__store = useGameStore;
 }

@@ -44,6 +44,16 @@ Documento vivo com as regras do jogo. Atualize sempre que uma regra mudar.
   - um **link compartilhável** (`/?sala=K7QF`) que já abre o jogo dentro da sessão.
 - Cada personagem só pode ser escolhido por um jogador por sessão.
 - O servidor de tempo real é Socket.io (hospedado no Render ou Railway); o jogo fica na Vercel.
+- Quem cria a sala é o **anfitrião (host)**: só ele pode começar a partida, depois que todos escolherem personagem.
+- Se o anfitrião sair, o próximo da lista vira anfitrião. Salas abandonadas somem depois de 6 horas.
+- Não é possível entrar numa sala cuja partida já começou.
+- Durante a partida:
+  - o host simula as hordas e é a fonte da verdade de vidas, pontos, moedas, trava de tela e vitória;
+  - cada aparelho controla o próprio personagem e envia a posição ~15 vezes por segundo;
+  - golpes nos inimigos são enviados ao host, que aplica o dano;
+  - moedas e caixas pegas por alguém somem para todos;
+  - poderes de ajuda valem para os jogadores próximos em qualquer aparelho.
+- Cada aparelho mostra só o cartão do próprio jogador no HUD.
 
 ## 4. Fase e desafios (estilo Metal Slug)
 

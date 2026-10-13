@@ -12,6 +12,8 @@ import { Level1, LEVEL1_BOUNDS } from './levels/Level1';
 import { GameOverScreen } from './ui/GameOverScreen';
 import { VictoryScreen } from './ui/VictoryScreen';
 import { CharacterSelect } from './ui/CharacterSelect';
+import { OnlineLobby } from './ui/OnlineLobby';
+import { getSocket, netSession } from '@/lib/net';
 import { InputProvider } from '@/contexts/InputContext';
 import { DeviceDetector, useIsTouch } from './ui/DeviceDetector';
 import { DuelHUD } from './ui/DuelHUD';
@@ -31,6 +33,13 @@ export default function GameCanvas() {
   const [gameState, setGameState] = useState<GameState>('playing');
   const [dialogText, setDialogText] = useState<string[]>([]);
   const [splitCount, setSplitCount] = useState(0);
+  const [lobby, setLobby] = useState<{ code?: string } | null>(null);
+
+  // Entrou pelo link compartilhado (?sala=CODE): abre direto a sala online
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('sala');
+    if (code) setLobby({ code: code.toUpperCase() });
+  }, []);
 
   const startGame = useCallback((next: PlayerSlot[]) => {
     players.clear();
@@ -40,9 +49,15 @@ export default function GameCanvas() {
     setRunId((id) => id + 1);
   }, []);
 
-  // Sem jogadores registrados a câmera ficaria parada; volta ao menu limpo
+  // Voltou ao menu: limpa jogadores e sai da sala online
   useEffect(() => {
-    if (!slots) players.clear();
+    if (slots) return;
+    players.clear();
+    if (netSession.active) {
+      getSocket().emit('room:leave');
+      netSession.active = false;
+      netSession.isHost = false;
+    }
   }, [slots]);
 
   return (
@@ -74,17 +89,30 @@ export default function GameCanvas() {
             {splitCount > 2 && <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 bg-white shadow-[0_0_12px_rgba(0,0,0,0.4)]" />}
           </div>
         )}
-        {!slots && <CharacterSelect isTouch={isTouch} onStart={startGame} onOnline={() => alert('Modo online em construção')} />}
+        {!slots && !lobby && <CharacterSelect isTouch={isTouch} onStart={startGame} onOnline={() => setLobby({})} />}
+        {!slots && lobby && (
+          <OnlineLobby
+            initialCode={lobby.code}
+            onStart={(next) => {
+              setLobby(null);
+              startGame(next);
+            }}
+            onBack={() => {
+              setLobby(null);
+              window.history.replaceState(null, '', window.location.pathname);
+            }}
+          />
+        )}
         {slots && (
           <>
-            <GameHUD slots={slots} onSwitch={() => setSlots(null)} />
+            <GameHUD slots={slots} onSwitch={() => setSlots(null)} compact={isTouch} />
             <DuelHUD />
           </>
         )}
         {gameState === 'dialog' && <DialogBox text={dialogText} onClose={() => setGameState('playing')} />}
-        {slots && gameState === 'gameOver' && <GameOverScreen onRestart={() => startGame(slots)} onSelectTeam={() => setSlots(null)} />}
-        {slots && gameState === 'victory' && <VictoryScreen slots={slots} onRestart={() => startGame(slots)} onSelectTeam={() => setSlots(null)} />}
-        {slots && slots.length === 1 && <DeviceDetector />}
+        {slots && gameState === 'gameOver' && <GameOverScreen onRestart={() => (netSession.active ? setSlots(null) : startGame(slots))} onSelectTeam={() => setSlots(null)} />}
+        {slots && gameState === 'victory' && <VictoryScreen slots={slots} onRestart={() => (netSession.active ? setSlots(null) : startGame(slots))} onSelectTeam={() => setSlots(null)} />}
+        {slots && slots.filter((s) => !s.remote).length === 1 && <DeviceDetector />}
       </div>
     </InputProvider>
   );

@@ -1,6 +1,7 @@
 // Estado mutável compartilhado entre componentes do loop de jogo.
 // Fica fora do React para não causar re-render a cada frame.
 import type { CharacterId } from './characters';
+import type { NetEnemy } from './protocol';
 
 export type Vec3 = { x: number; y: number; z: number };
 
@@ -60,6 +61,8 @@ export interface EnemyEntry {
   getPosition: () => Vec3;
   hit: (damage: number, fromX: number) => void;
   alive: () => boolean;
+  // Foto do estado para o host enviar aos convidados (só inimigos simulados aqui)
+  snapshot?: () => NetEnemy;
 }
 
 export const enemyRegistry = new Map<string, EnemyEntry>();

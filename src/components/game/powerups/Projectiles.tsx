@@ -33,12 +33,12 @@ function Projectile({ data }: { data: ProjectileData }) {
     ref.current.position.set(p.x, p.y, 0);
     ref.current.rotation.z += delta * 10;
     let hit = false;
-    if (data.owner === 'player') {
+    if (data.owner === 'player' && !data.visual) {
       const enemy = findEnemyNear(p.x, p.y, 0.6);
       const boost = useGameStore.getState().damageBoostUntil > performance.now() ? 2 : 1;
       if (enemy) enemy.hit(cfg.damage * boost, p.x - data.dir);
       hit = !!enemy;
-    } else {
+    } else if (data.owner === 'enemy') {
       players.forEach((pl) => {
         if (hit || !pl.local) return;
         if (Math.abs(pl.position.x - p.x) < 0.5 && p.y > pl.position.y && p.y < pl.position.y + 1.4) {

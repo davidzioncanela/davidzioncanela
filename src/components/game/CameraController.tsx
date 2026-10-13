@@ -17,6 +17,7 @@ interface CameraControllerProps {
 // olha à frente, trava na arena durante as hordas e aproxima nos diálogos
 export function CameraController({ gameState, bounds }: CameraControllerProps) {
   const camera = useThree((state) => state.camera);
+  const size = useThree((state) => state.size);
   const target = useRef(new THREE.Vector3(-12, 14, 12));
   const lookAt = useRef(new THREE.Vector3(-12, 12, 0));
   const desiredLook = useRef(new THREE.Vector3());
@@ -44,6 +45,10 @@ export function CameraController({ gameState, bounds }: CameraControllerProps) {
     } else if (gameState === 'dialog') {
       distance = 8;
     }
+
+    // Tela em pé (celular): afasta a câmera para caber a mesma largura de cena
+    const aspect = size.width / Math.max(1, size.height);
+    distance *= THREE.MathUtils.clamp(1.3 / aspect, 1, 2.2);
 
     target.current.set(cx, span.avgY + height, distance);
     const t = 1 - Math.pow(0.02, delta);

@@ -1,0 +1,26 @@
+{
+  "name": "super-zion-brothers-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Servidor de tempo real (Socket.io) do Super Zion Brothers: salas online e chat da cidade",
+  "type": "module",
+  "main": "dist/server/src/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server/src/index.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  }
+}

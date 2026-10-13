@@ -1,6 +1,7 @@
 import type { ModelName } from '@/components/game/characters/CharacterModel';
+import type { CharacterId } from './protocol';
 
-export type CharacterId = 'david' | 'yohann' | 'laura' | 'lara';
+export type { CharacterId };
 
 export type HelpPowerId = 'escudo' | 'coragem' | 'lancamento' | 'cura';
 

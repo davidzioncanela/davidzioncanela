@@ -1,14 +1,16 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { RigidBody, BallCollider } from '@react-three/rapier';
 import { Mesh } from 'three';
 import { useGameStore } from '@/store/gameStore';
+import { sendEvent } from '@/lib/net';
 
 export function Coin({ position }: { position: [number, number, number] }) {
   const ref = useRef<Mesh>(null);
-  const [collected, setCollected] = useState(false);
+  const key = `coin:${position[0]},${position[1]}`;
+  const collected = useGameStore((s) => s.pickedUp.includes(key));
 
   useFrame((_, delta) => {
     if (ref.current) ref.current.rotation.y += delta * 3;
@@ -23,8 +25,11 @@ export function Coin({ position }: { position: [number, number, number] }) {
         sensor
         onIntersectionEnter={({ other }) => {
           if (!other.rigidBodyObject?.userData?.player) return;
-          setCollected(true);
-          useGameStore.getState().addCoin();
+          const store = useGameStore.getState();
+          if (store.pickedUp.includes(key)) return;
+          store.markPicked(key);
+          store.addCoin();
+          sendEvent({ type: 'pickup', key, by: other.rigidBodyObject.userData.player });
         }}
       />
       <mesh ref={ref} rotation={[Math.PI / 2, 0, 0]}>

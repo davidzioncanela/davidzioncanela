@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { RigidBody, CuboidCollider } from '@react-three/rapier';
 import { Group } from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -8,6 +8,7 @@ import { Sparkles } from '@react-three/drei';
 import { PowerUpType, useGameStore } from '@/store/gameStore';
 import type { CharacterId } from '@/lib/characters';
 import { Burst, POWER_COLORS } from '../effects/PowerEffects';
+import { sendEvent } from '@/lib/net';
 
 interface PowerUpBoxProps {
   position: [number, number, number];
@@ -17,7 +18,8 @@ interface PowerUpBoxProps {
 // Caixa flutuante brilhante: tocar nela ativa o power-up de quem tocou (substitui o atual)
 export function PowerUpBox({ position, type }: PowerUpBoxProps) {
   const ref = useRef<Group>(null);
-  const [collected, setCollected] = useState(false);
+  const key = `power:${position[0]},${position[1]}`;
+  const collected = useGameStore((s) => s.pickedUp.includes(key));
   const color = POWER_COLORS[type];
 
   useFrame((state) => {
@@ -37,8 +39,11 @@ export function PowerUpBox({ position, type }: PowerUpBoxProps) {
           onIntersectionEnter={({ other }) => {
             const who = other.rigidBodyObject?.userData?.player as CharacterId | undefined;
             if (!who) return;
-            setCollected(true);
-            useGameStore.getState().setPowerUp(who, type);
+            const store = useGameStore.getState();
+            if (store.pickedUp.includes(key)) return;
+            store.markPicked(key);
+            store.setPowerUp(who, type);
+            sendEvent({ type: 'pickup', key, by: who, powerUp: type });
           }}
         />
       )}

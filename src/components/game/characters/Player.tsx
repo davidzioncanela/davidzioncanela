@@ -6,6 +6,8 @@ import { RigidBody, CapsuleCollider, useRapier, RapierRigidBody } from '@react-t
 import { useInput } from '@/contexts/InputContext';
 import { useGameStore } from '@/store/gameStore';
 import { players, registerPlayer, findEnemyNear } from '@/lib/gameRuntime';
+import { applyHelpPower } from '@/lib/helpPowers';
+import { sendEvent } from '@/lib/net';
 import { CharacterInfo, InputScheme, capsuleFor } from '@/lib/characters';
 import { isPressed } from '@/lib/controls';
 import { CharacterModel } from './CharacterModel';
@@ -29,7 +31,6 @@ const COYOTE_TIME = 0.1;
 const JUMP_BUFFER = 0.12;
 const ATTACK_COOLDOWN = 0.35;
 const FALL_LIMIT = -12;
-const HELP_RADIUS = 4;
 const BASE_DAMAGE = 10;
 
 // Personagem controlado por uma pessoa neste aparelho
@@ -183,7 +184,9 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
       s.attackCooldown = ATTACK_COOLDOWN;
       s.attackAnim = 0.3;
       if (powerUp === 'laser' || powerUp === 'fire-ball') {
-        store.spawnProjectile({ kind: powerUp, x: pos.x + face * 0.6, y: pos.y + character.height * 0.6, dir: face, owner: 'player' });
+        const shot = { kind: powerUp, x: pos.x + face * 0.6, y: pos.y + character.height * 0.6, dir: face, owner: 'player' } as const;
+        store.spawnProjectile(shot);
+        sendEvent({ type: 'projectile', ...shot });
       } else {
         const boost = store.damageBoostUntil > performance.now() ? 2 : 1;
         findEnemyNear(pos.x + face * 0.9, pos.y + 0.8, 1.2)?.hit(BASE_DAMAGE * boost, pos.x);
@@ -192,7 +195,9 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
 
     // Poder de ajuda próprio do personagem
     if (help && !s.helpHeld && (hud?.helpCooldownLeft ?? 0) <= 0) {
-      applyHelpPower(character, pos);
+      store.startHelpCooldown(id, character.help.cooldown);
+      applyHelpPower(character.help.id, id, pos.x, pos.y, false);
+      sendEvent({ type: 'help', from: id, power: character.help.id, x: pos.x, y: pos.y });
       s.helpAnim = 0.6;
       setHelpBurst((n) => n + 1);
     }
@@ -235,25 +240,4 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
       )}
     </RigidBody>
   );
-}
-
-// Aplica o poder de ajuda do personagem nos aliados próximos
-function applyHelpPower(character: CharacterInfo, pos: { x: number; y: number }) {
-  const store = useGameStore.getState();
-  store.startHelpCooldown(character.id, character.help.cooldown);
-  const near = [...players.values()].filter((p) => Math.hypot(p.position.x - pos.x, p.position.y - pos.y) < HELP_RADIUS);
-  switch (character.help.id) {
-    case 'escudo':
-      near.forEach((p) => store.giveShield(p.id, 8));
-      break;
-    case 'coragem':
-      store.boostDamage(6);
-      break;
-    case 'lancamento':
-      near.filter((p) => p.id !== character.id).forEach((p) => (p.pendingImpulse = { x: 0, y: 17, z: 0 }));
-      break;
-    case 'cura':
-      store.gainLife();
-      break;
-  }
 }

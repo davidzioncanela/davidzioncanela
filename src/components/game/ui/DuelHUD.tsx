@@ -4,6 +4,7 @@ import { useGameStore } from '@/store/gameStore';
 import { Swords } from 'lucide-react';
 
 const MAX_SHOWN = 6;
+const MAX_SHOWN_SMALL = 2;
 
 // Contador da horda + mini barras de vida dos inimigos mais próximos de acabar
 export function DuelHUD() {
@@ -11,10 +12,11 @@ export function DuelHUD() {
   const locked = useGameStore((s) => s.screenLock !== null);
   if (!locked && enemies.length === 0) return null;
 
-  const shown = [...enemies].sort((a, b) => a.health / a.maxHealth - b.health / b.maxHealth).slice(0, MAX_SHOWN);
+  const small = typeof window !== 'undefined' && window.innerWidth < 640;
+  const shown = [...enemies].sort((a, b) => a.health / a.maxHealth - b.health / b.maxHealth).slice(0, small ? MAX_SHOWN_SMALL : MAX_SHOWN);
 
   return (
-    <div className="pointer-events-none absolute left-1/2 top-3 z-40 flex w-[min(92vw,560px)] -translate-x-1/2 flex-col items-center gap-2">
+    <div className="pointer-events-none absolute left-1/2 top-3 z-40 flex w-[min(60vw,560px)] -translate-x-1/2 flex-col items-center gap-2">
       <div className="hud-pill animate-pulse bg-[#FF4B4B]/90 text-sm text-white">
         <Swords size={16} /> HORDA! {enemies.length} {enemies.length === 1 ? 'inimigo' : 'inimigos'}
       </div>

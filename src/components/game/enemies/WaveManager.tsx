@@ -68,7 +68,9 @@ export function WaveManager({ waves, setGameState, onAllCleared }: WaveManagerPr
     const scale = difficulty(useGameStore.getState().playerCount);
     while (w.nextGroup < def.groups.length && def.groups[w.nextGroup].delay <= w.elapsed) {
       const g = def.groups[w.nextGroup];
-      const count = g.count + (g.power === 'gigante' ? 0 : scale.extraEnemies);
+      // Inimigos extras por jogador a mais, em levas alternadas (para não lotar a arena)
+      const extra = g.power === 'gigante' || w.nextGroup % 2 === 1 ? 0 : scale.extraEnemies;
+      const count = g.count + extra;
       const batch = Array.from({ length: count }, (_, i) =>
         makeEnemy(`w${current}-g${w.nextGroup}-${i}`, spawnPosition(def, g.from, i, count), g.from, g.power ?? randomPower(), scale)
       );

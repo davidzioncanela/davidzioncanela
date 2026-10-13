@@ -8,6 +8,7 @@ import { POWER_COLORS } from '../effects/PowerEffects';
 
 interface GameHUDProps {
   slots: PlayerSlot[];
+  compact?: boolean;
   onSwitch: () => void;
 }
 
@@ -21,7 +22,9 @@ const POWER_LABELS: Record<string, string> = {
 
 const keyLabel = (k: string) => (k === ' ' ? 'Espaço' : k.length === 1 ? k.toUpperCase() : k);
 
-export function GameHUD({ slots, onSwitch }: GameHUDProps) {
+export function GameHUD({ slots, onSwitch, compact = false }: GameHUDProps) {
+  // Cada aparelho mostra só os cartões dos próprios jogadores
+  const localSlots = slots.filter((s) => !s.remote);
   const lives = useGameStore((s) => s.lives);
   const coins = useGameStore((s) => s.collectedCoins);
   const score = useGameStore((s) => s.score);
@@ -58,24 +61,24 @@ export function GameHUD({ slots, onSwitch }: GameHUDProps) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-end justify-center gap-3">
-        {slots.map((slot, i) => {
+      <div className={compact ? 'absolute left-3 top-16 flex flex-col gap-2' : 'flex flex-wrap items-end justify-center gap-3'}>
+        {localSlots.map((slot, i) => {
           const c = CHARACTERS[slot.character];
           const hud = players[slot.character];
           const ready = (hud?.helpCooldownLeft ?? 0) <= 0;
           const scheme = SCHEMES[slot.input];
           return (
-            <div key={slot.character} className="card-duo min-w-[210px] px-3 py-2 shadow-xl">
+            <div key={slot.character} className={`card-duo px-3 py-2 shadow-xl ${compact ? 'min-w-[150px] scale-90 origin-top-left' : 'min-w-[210px]'}`}>
               <div className="flex items-center justify-between">
                 <span className="font-title text-lg font-bold">
-                  {slots.length > 1 && <span className="mr-1 text-xs text-gray-400">J{i + 1}</span>}
+                  {localSlots.length > 1 && <span className="mr-1 text-xs text-gray-400">J{i + 1}</span>}
                   {c.name}
                 </span>
                 {(hud?.shieldUntil ?? 0) > performance.now() && <Shield size={16} className="text-[#1CB0F6]" />}
               </div>
               <div className={`mt-1 flex items-center justify-between rounded-xl px-2 py-1 text-xs font-extrabold ${ready ? 'bg-[#D7FFB8] text-[#58A700]' : 'bg-gray-100 text-gray-400'}`}>
                 <span>
-                  {c.help.name} [{keyLabel(scheme.help[0])}]
+                  {c.help.name} {!compact && `[${keyLabel(scheme.help[0])}]`}
                 </span>
                 <span>{ready ? 'PRONTO' : `${hud?.helpCooldownLeft}s`}</span>
               </div>

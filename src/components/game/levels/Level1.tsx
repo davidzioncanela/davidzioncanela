@@ -15,6 +15,9 @@ import { GameState } from '../GameCanvas';
 import { useGameStore } from '@/store/gameStore';
 import { CHARACTERS, PlayerSlot, teamSetup } from '@/lib/characters';
 import { Wave } from '@/lib/enemies';
+import { isGuest, netSession, sendEvent } from '@/lib/net';
+import { NetSync } from '../net/NetSync';
+import { RemotePlayer } from '../net/RemotePlayer';
 
 interface Level1Props {
   slots: PlayerSlot[];
@@ -142,15 +145,26 @@ export function Level1({ slots, gameState, setGameState, setDialogText }: Level1
       {/* Arena final: chão de grama com a gaiola */}
       <GrassPlatform position={[74, 0, 0]} scale={[22, 1, 6]} />
 
-      <WaveManager waves={WAVES} setGameState={setGameState} onAllCleared={() => setCageOpen(true)} />
+      {/* No modo online só o host simula as hordas; os convidados veem os bonecos sincronizados */}
+      {!isGuest() && <WaveManager waves={WAVES} setGameState={setGameState} onAllCleared={() => setCageOpen(true)} />}
 
-      <Captive characters={captives} position={[82, 0.5, 0]} canRescue={cageOpen} onRescued={() => setGameState('victory')} />
+      <Captive characters={captives} position={[82, 0.5, 0]} canRescue={cageOpen}
+        onRescued={() => {
+          sendEvent({ type: 'rescued' });
+          setGameState('victory');
+        }}
+      />
 
-      {slots.map((slot, i) => (
-        <Player key={slot.character} character={CHARACTERS[slot.character]} input={slot.input} position={SPAWNS[i]} frozen={frozen} />
-      ))}
+      {slots.map((slot, i) =>
+        slot.remote ? (
+          <RemotePlayer key={slot.character} character={CHARACTERS[slot.character]} position={SPAWNS[i]} />
+        ) : (
+          <Player key={slot.character} character={CHARACTERS[slot.character]} input={slot.input} position={SPAWNS[i]} frozen={frozen} />
+        )
+      )}
       {companion && <Companion character={companion} leader={slots[0].character} position={SPAWNS[1]} frozen={frozen} />}
       <Projectiles />
+      {netSession.active && <NetSync gameState={gameState} setGameState={setGameState} cageOpen={cageOpen} setCageOpen={setCageOpen} />}
     </group>
   );
 }

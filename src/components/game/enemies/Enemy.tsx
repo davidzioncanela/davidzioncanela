@@ -10,6 +10,7 @@ import { enemyRegistry, nearestPlayer } from '@/lib/gameRuntime';
 import { EnemySpawn } from '@/lib/enemies';
 import { capsuleFor } from '@/lib/characters';
 import { CharacterModel } from '../characters/CharacterModel';
+import { sendEvent } from '@/lib/net';
 
 interface EnemyProps {
   spawn: EnemySpawn;
@@ -33,7 +34,7 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
   const [facing, setFacing] = useState<1 | -1>(-1);
   const [dead, setDead] = useState(false);
   const capsule = capsuleFor(power.height);
-  const state = useRef({ health: maxHealth, attackTimer: 2 + Math.random(), hurtTimer: 0, actionAnim: 0, emerge: entry === 'ground' ? 1 : 0 });
+  const state = useRef({ anim: 'Idle', facing: -1 as 1 | -1, dead: false, health: maxHealth, attackTimer: 2 + Math.random(), hurtTimer: 0, actionAnim: 0, emerge: entry === 'ground' ? 1 : 0 });
 
   useEffect(() => {
     const s = state.current;
@@ -42,6 +43,10 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
     enemyRegistry.set(id, {
       getPosition: () => bodyRef.current?.translation() ?? { x: spawn.position[0], y: spawn.position[1], z: 0 },
       alive: () => s.health > 0,
+      snapshot: () => {
+        const p = bodyRef.current?.translation() ?? { x: spawn.position[0], y: spawn.position[1] };
+        return { id, name, power: power.label, color: power.color, height: power.height, x: p.x, y: p.y, facing: s.facing, anim: s.anim, health: s.health, maxHealth, emerge: s.emerge, dead: s.dead };
+      },
       hit: (damage, fromX) => {
         if (s.health <= 0) return;
         s.health = Math.max(0, s.health - damage);
@@ -69,6 +74,8 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
 
     if (s.health <= 0 || pos.y < -12) {
       s.health = 0;
+      s.dead = true;
+      s.anim = 'Death_A';
       setDead(true);
       setAnimation('Death_A');
       const store = useGameStore.getState();
@@ -92,6 +99,7 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
     const dx = player.x - pos.x;
     const dist = Math.hypot(dx, player.y - pos.y);
     const dir = (Math.sign(dx) || 1) as 1 | -1;
+    s.facing = dir;
     if (dir !== facing) setFacing(dir);
 
     const ray = new rapier.Ray({ x: pos.x, y: pos.y + 0.1, z: 0 }, { x: 0, y: -1, z: 0 });
@@ -115,7 +123,9 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
       if (dist < RANGED_MAX && s.attackTimer <= 0) {
         s.attackTimer = cooldown;
         s.actionAnim = 0.5;
-        useGameStore.getState().spawnProjectile({ kind: power.ranged, x: pos.x + dir * 0.6, y: pos.y + power.height * 0.6, dir, owner: 'enemy' });
+        const shot = { kind: power.ranged, x: pos.x + dir * 0.6, y: pos.y + power.height * 0.6, dir, owner: 'enemy' } as const;
+        useGameStore.getState().spawnProjectile(shot);
+        sendEvent({ type: 'projectile', ...shot });
       }
     } else {
       // Corpo a corpo: persegue e golpeia
@@ -128,7 +138,9 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
       if (dist < MELEE_RANGE + (power.height - 1.2) * 0.5 && s.attackTimer <= 0) {
         s.attackTimer = cooldown;
         s.actionAnim = 0.5;
-        if (target.local && useGameStore.getState().hurtPlayer(target.id)) target.pendingImpulse = { x: dir * 7, y: 6, z: 0 };
+        // Jogador de outro aparelho: avisa para ele aplicar o golpe em si mesmo
+        if (!target.local) sendEvent({ type: 'hurt', target: target.id, kx: dir * 7, ky: 6 });
+        else if (useGameStore.getState().hurtPlayer(target.id)) target.pendingImpulse = { x: dir * 7, y: 6, z: 0 };
       }
     }
     if (power.jumps && !grounded) vx = vel.x;
@@ -139,6 +151,7 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
     else if (s.actionAnim > 0) next = power.ranged ? 'Spellcast_Shoot' : '1H_Melee_Attack_Stab';
     else if (!grounded) next = 'Jump_Idle';
     else if (Math.abs(vx) > 0.3) next = power.speed > 3 ? 'Running_A' : 'Walking_A';
+    s.anim = next;
     if (next !== animation) setAnimation(next);
   });
 
