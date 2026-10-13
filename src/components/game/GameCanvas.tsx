@@ -19,6 +19,7 @@ import { DeviceDetector, useIsTouch } from './ui/DeviceDetector';
 import { DuelHUD } from './ui/DuelHUD';
 import { PipeMinimap } from './ui/PipeMinimap';
 import { FadeOverlay } from './ui/FadeOverlay';
+import { UnlockToast } from './ui/UnlockToast';
 import { SkySystem } from './sky/SkySystem';
 import { Scenery } from './sky/Scenery';
 import { Town } from '../town/Town';
@@ -158,6 +159,7 @@ export default function GameCanvas() {
             <DuelHUD />
             <PipeMinimap />
             <FadeOverlay />
+            <UnlockToast />
           </>
         )}
         {gameState === 'dialog' && <DialogBox text={dialogText} onClose={() => setGameState('playing')} />}

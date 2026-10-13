@@ -1,10 +1,12 @@
 'use client';
 
-import { Heart, Star, Trophy, Users, Shield, Flame } from 'lucide-react';
+import { Heart, Star, Trophy, Users, Shield, Flame, Lock } from 'lucide-react';
 import { useGameStore } from '@/store/gameStore';
 import { CHARACTERS, PlayerSlot } from '@/lib/characters';
 import { SCHEMES } from '@/lib/controls';
 import { POWER_COLORS } from '../effects/PowerEffects';
+import { ABILITIES } from '@/lib/abilities';
+import { useProfileStore } from '@/store/profileStore';
 
 interface GameHUDProps {
   slots: PlayerSlot[];
@@ -32,6 +34,9 @@ export function GameHUD({ slots, onSwitch, compact = false, levelNumber, levelNa
   const score = useGameStore((s) => s.score);
   const players = useGameStore((s) => s.players);
   const boost = useGameStore((s) => s.damageBoostUntil > performance.now());
+  const unlocked = useProfileStore((s) => s.unlocked);
+  const profilePoints = useProfileStore((s) => s.points);
+  const profileCoins = useProfileStore((s) => s.coins);
 
   return (
     <div className="pointer-events-none absolute inset-0 z-40 flex flex-col justify-between p-3 sm:p-5">
@@ -83,6 +88,23 @@ export function GameHUD({ slots, onSwitch, compact = false, levelNumber, levelNa
                   {c.help.name} {!compact && `[${keyLabel(scheme.help[0])}]`}
                 </span>
                 <span>{ready ? 'PRONTO' : `${hud?.helpCooldownLeft}s`}</span>
+              </div>
+              {/* Ações-prêmio: desbloqueadas aparecem coloridas; as outras mostram quanto falta */}
+              <div className="mt-1 flex flex-wrap gap-1">
+                {ABILITIES.map((a) => {
+                  const ok = unlocked.includes(a.id);
+                  const need = a.need.coins ? `${Math.max(0, a.need.coins - profileCoins)} moedas` : `${Math.max(0, (a.need.points ?? 0) - profilePoints)} pts`;
+                  return (
+                    <span
+                      key={a.id}
+                      title={`${a.name}: ${a.meaning}`}
+                      className={`flex items-center gap-0.5 rounded-lg px-1.5 py-0.5 text-[10px] font-extrabold ${ok ? 'bg-[#DDF4FF] text-[#1899D6]' : 'bg-gray-100 text-gray-400'}`}
+                    >
+                      {!ok && <Lock size={10} />}
+                      {ok ? `${a.name} ${compact ? '' : `(${a.how})`}` : `${a.name}: faltam ${need}`}
+                    </span>
+                  );
+                })}
               </div>
               {hud?.powerUp && (
                 <div

@@ -3,6 +3,7 @@
 import { CloudPlatform } from '../platforms/CloudPlatform';
 import { PowerUpBox } from '../powerups/PowerUpBox';
 import { Coin } from '../items/Coin';
+import { LowTunnel } from '../traversal/LowTunnel';
 import { Rope } from '../traversal/Rope';
 import { Wave } from '@/lib/enemies';
 import { Ground, LevelProps, LevelShell } from './LevelShell';
@@ -41,7 +42,7 @@ export function Level1(props: LevelProps) {
       {...props}
       spawn={[-7, 2]}
       waves={WAVES}
-      monsters={[[5, 0.5], [23, 3.5], [75, 14.3]]}
+      monsters={[[13, 0.5], [23, 3.5], [75, 14.3]]}
       cage={[131, 18.3]}
       intro={[
         'Fase 1: Da Terra às Nuvens!',
@@ -58,6 +59,8 @@ export function Level1(props: LevelProps) {
       <Coin position={[17, 3.5, 0]} />
       <Coin position={[23, 5, 0]} />
       <PowerUpBox position={[5, 2.5, 0]} type="super-jump" />
+      {/* Atalho baixo: só engatinhando */}
+      <LowTunnel x1={7} x2={11} />
 
       {/* Subindo pelas nuvens: firme, que afunda, elástica e à deriva */}
       <CloudPlatform position={[34, 6.5, 0]} scale={[4, 0.5, 3]} kind="firme" />

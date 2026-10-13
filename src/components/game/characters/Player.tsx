@@ -12,6 +12,9 @@ import { CharacterInfo, InputScheme, capsuleFor } from '@/lib/characters';
 import { isPressed } from '@/lib/controls';
 import { CharacterModel } from './CharacterModel';
 import { newTraversalState, updateTraversal } from './traversal';
+import { Sparkles } from '@react-three/drei';
+import { useProfileStore } from '@/store/profileStore';
+import { DANCES, DANCE_RECHARGE, LIE_COOLDOWN, LIE_MAX_SECONDS } from '@/lib/abilities';
 import { PowerAura, HelpBurst } from '../effects/PowerEffects';
 
 interface PlayerProps {
@@ -22,7 +25,11 @@ interface PlayerProps {
 }
 
 // Ajustes de física (gravidade do mundo: -25)
+// Anda devagar no começo e corre depois de segurar a direção um pouquinho
 const WALK_SPEED = 6;
+const STROLL_SPEED = 3.8;
+const RUN_AFTER = 0.4;
+const CRAWL_SPEED = 2.5;
 const FAST_SPEED = 10;
 const JUMP_VELOCITY = 11;
 const SUPER_JUMP_VELOCITY = 16;
@@ -48,6 +55,9 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
   const [helpBurst, setHelpBurst] = useState(0);
   const power = useGameStore((st) => st.players[id]?.powerUp ?? null);
   const [shielded, setShielded] = useState(false);
+  // Postura: em pé, baixa (agachado/engatinhando) ou deitado — muda o tamanho do colisor
+  const [pose, setPose] = useState<'stand' | 'low' | 'lie'>('stand');
+  const [dancing, setDancing] = useState(false);
 
   const t = useRef({
     sinceGrounded: 0,
@@ -59,6 +69,9 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
     attackCooldown: 0,
     attackAnim: 0,
     helpAnim: 0,
+    holdTime: 0,
+    lieTime: 0,
+    lieCooldown: 0,
     // Último ponto em chão firme, usado para reaparecer após uma queda
     safe: { x: position[0], y: position[1] },
   });
@@ -165,8 +178,38 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
       return;
     }
 
+    const profile = useProfileStore.getState();
+    const lieKey = isPressed(k, input, 'lie');
+    const danceKey = isPressed(k, input, 'dance');
+
+    // Teto baixo em cima (atalhos): não dá para ficar em pé
+    const headRay = new rapier.Ray({ x: pos.x, y: pos.y + 0.7, z: 0 }, { x: 0, y: 1, z: 0 });
+    const ceiling = !!world.castRay(headRay, Math.max(0.05, character.height - 0.6), true, undefined, undefined, undefined, body);
+
+    // Deitar (prêmio): imune a dano por até 3s, depois precisa levantar
+    s.lieCooldown -= delta;
+    const lying = lieKey && grounded && profile.has('deitar') && s.lieCooldown <= 0 && s.lieTime < LIE_MAX_SECONDS;
+    if (lying) s.lieTime += delta;
+    else if (s.lieTime > 0) {
+      s.lieCooldown = s.lieTime >= LIE_MAX_SECONDS ? LIE_COOLDOWN : 0.5;
+      s.lieTime = 0;
+    }
+    me.lying = lying;
+
+    // Dançar (prêmio): dança própria de cada personagem; recarrega o poder de ajuda mais rápido
+    const isDancing = !lying && danceKey && grounded && dirInput === 0 && profile.has('dancar');
+    if (isDancing) store.rechargeHelp(id, delta * (DANCE_RECHARGE - 1));
+    if (isDancing !== dancing) setDancing(isDancing);
+
+    // Engatinhar (prêmio): ↓ + andar, bem baixinho, passa pelos atalhos
+    const crawling = grounded && (crouch || ceiling) && dirInput !== 0 && (profile.has('engatinhar') || ceiling);
+    const low = grounded && (crouch || ceiling) && !lying;
+    me.low = low;
+    const nextPose = lying ? 'lie' : low ? 'low' : 'stand';
+    if (nextPose !== pose) setPose(nextPose);
+
     // Agachar: carrega o super pulo (2s agachado, solta para pular)
-    const crouching = crouch && grounded;
+    const crouching = crouch && grounded && !crawling;
     if (crouching) s.crouchTime += delta;
     let vy = vel.y;
     if (!crouching && s.crouchTime >= CROUCH_CHARGE_TIME && grounded) vy = CROUCH_JUMP_VELOCITY;
@@ -176,8 +219,9 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
 
     // Movimento horizontal com aceleração rápida (sensação de plataforma)
     const dir = dirInput;
-    const speed = powerUp === 'super-speed' ? FAST_SPEED : WALK_SPEED;
-    const targetVx = (crouching ? 0 : dir * speed) + (grounded ? plat.x : 0);
+    s.holdTime = dir !== 0 ? s.holdTime + delta : 0;
+    const speed = crawling ? CRAWL_SPEED : powerUp === 'super-speed' ? FAST_SPEED : s.holdTime > RUN_AFTER || !grounded ? WALK_SPEED : STROLL_SPEED;
+    const targetVx = (crouching || lying || isDancing ? 0 : dir * speed) + (grounded ? plat.x : 0);
     const accel = grounded ? 40 : 20;
     let vx = vel.x + Math.sign(targetVx - vel.x) * Math.min(Math.abs(targetVx - vel.x), accel * delta);
     if (dir !== 0 && dir !== facing) setFacing(dir as 1 | -1);
@@ -185,7 +229,7 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
     // Pulo com buffer, coyote time e altura variável
     if (jump && !s.jumpHeld) s.sinceJumpPressed = 0;
     else s.sinceJumpPressed += delta;
-    if (s.sinceJumpPressed < JUMP_BUFFER && s.sinceGrounded < COYOTE_TIME && !crouching) {
+    if (s.sinceJumpPressed < JUMP_BUFFER && s.sinceGrounded < COYOTE_TIME && !crouching && !lying && !ceiling) {
       vy = powerUp === 'super-jump' ? SUPER_JUMP_VELOCITY : JUMP_VELOCITY;
       s.sinceJumpPressed = 99;
       s.sinceGrounded = 99;
@@ -214,7 +258,7 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
     s.attackAnim -= delta;
     s.helpAnim -= delta;
     const face = dir !== 0 ? (dir as 1 | -1) : facing;
-    if (attack && s.attackCooldown <= 0) {
+    if (attack && s.attackCooldown <= 0 && !lying) {
       s.attackCooldown = ATTACK_COOLDOWN;
       s.attackAnim = 0.3;
       if (powerUp === 'laser' || powerUp === 'fire-ball') {
@@ -244,8 +288,14 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
     if (s.helpAnim > 0) next = 'Spellcast_Raise';
     else if (s.attackAnim > 0) next = powerUp === 'laser' || powerUp === 'fire-ball' ? 'Spellcast_Shoot' : character.attack;
     else if (!grounded) next = 'Jump_Idle';
-    else if (crouching) next = 'Sit_Floor_Pose';
-    else if (Math.abs(vx) > 0.5) next = Math.abs(vx) > WALK_SPEED + 1 ? 'Running_B' : 'Running_A';
+    else if (lying) next = 'Lie_Idle';
+    else if (isDancing) next = DANCES[id];
+    else if (crawling) next = 'Walking_C';
+    else if (crouching || low) next = 'Sit_Floor_Pose';
+    else if (Math.abs(vx - (grounded ? plat.x : 0)) > 0.5) {
+      const v = Math.abs(vx - (grounded ? plat.x : 0));
+      next = v > WALK_SPEED + 1 ? 'Running_B' : v > STROLL_SPEED + 0.5 ? 'Running_A' : 'Walking_A';
+    }
     if (next !== animation) setAnimation(next);
     me.animation = next;
   });
@@ -262,8 +312,16 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
       userData={{ player: id }}
     >
       {/* Peso proporcional ao tamanho: afunda mais as nuvens */}
-      <CapsuleCollider args={[capsule.halfHeight, capsule.radius]} position={[0, capsule.centerY, 0]} mass={character.height * 0.8} />
-      <CharacterModel model={character.model} animation={animation} accessories={character.gear} facing={facing} height={character.height} blink={blinking} />
+      {pose === 'stand' ? (
+        <CapsuleCollider key="stand" args={[capsule.halfHeight, capsule.radius]} position={[0, capsule.centerY, 0]} mass={character.height * 0.8} />
+      ) : (
+        // Baixinho: cabe nos atalhos de teto baixo
+        <CapsuleCollider key="low" args={[0.05, 0.27]} position={[0, 0.32, 0]} mass={character.height * 0.8} />
+      )}
+      <group scale={[1, animation === 'Walking_C' ? 0.6 : 1, 1]}>
+        <CharacterModel model={character.model} animation={animation} accessories={character.gear} facing={facing} height={character.height} blink={blinking} />
+      </group>
+      {dancing && <Sparkles count={30} scale={[1.6, character.height * 1.6, 1.6]} position={[0, character.height / 2, 0]} size={9} speed={2} color="#F472B6" />}
       <PowerAura powerUp={power} height={character.height} shielded={shielded} />
       <HelpBurst trigger={helpBurst} power={character.help.id} />
       {crouchState !== 'none' && (

@@ -18,12 +18,15 @@ export interface PlayerRuntime {
   // Reposicionamento pedido pelo jogo (ex.: puxar para dentro da arena da horda)
   pendingTeleport: Vec3 | null;
   animation: string;
+  // Deitado não recebe dano; agachado/engatinhando os tiros passam por cima
+  lying: boolean;
+  low: boolean;
 }
 
 export const players = new Map<CharacterId, PlayerRuntime>();
 
 export function registerPlayer(id: CharacterId, local: boolean, position: Vec3): PlayerRuntime {
-  const p: PlayerRuntime = { id, position, velocity: { x: 0, y: 0, z: 0 }, facing: 1, grounded: false, local, pendingImpulse: null, pendingTeleport: null, animation: 'Idle' };
+  const p: PlayerRuntime = { id, position, velocity: { x: 0, y: 0, z: 0 }, facing: 1, grounded: false, local, pendingImpulse: null, pendingTeleport: null, animation: 'Idle', lying: false, low: false };
   players.set(id, p);
   return p;
 }

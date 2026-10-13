@@ -105,6 +105,23 @@ Documento vivo com as regras do jogo. Atualize sempre que uma regra mudar.
 - **Galhos** e **barras horizontais**: o personagem se pendura e atravessa mão a mão.
 - **Portas** de entrada e saída ao longo do mapa, ligando áreas como num labirinto.
 
+## 4.5 Ações dos personagens
+- Todos os personagens **colidem entre si** (dá para subir em cima do outro), inclusive com jogadores de outros aparelhos e com os monstros.
+
+| Ação | Como | Para que serve | Disponível |
+|---|---|---|---|
+| Andar / correr | segurar a direção; depois de 0,4 s passa a correr | correndo o pulo alcança mais longe | desde o início |
+| Pular | ↑ / W / Espaço | — | desde o início |
+| Agachar | ↓ parado | tiros passam por cima; 2 s carregam o Super Pulo | desde o início |
+| Engatinhar | ↓ + andar | passa pelos **atalhos baixos** (teto a 1,0); a Lara (2,5 anos) passa até em pé | prêmio: **10 moedas** |
+| Deitar | Z (J2: `.`; toque: botão roxo) | **não recebe dano** por até 3 s; depois precisa levantar (4 s de espera) | prêmio: **800 pontos** |
+| Dançar | V (J2: `,`; toque: botão rosa) | cada personagem tem **sua dança**; dançar **recarrega o poder de ajuda 3x mais rápido** | prêmio: **1500 pontos** |
+
+- Pontos e moedas são **somados entre as partidas** neste aparelho; ao alcançar o valor, a ação é desbloqueada com um aviso na tela.
+- O HUD mostra as ações liberadas e quanto falta para as bloqueadas.
+- Cada fase tem um **atalho baixo** com moedas dentro.
+- Danças: Dávid comemora, Yohann faz a dança do machado, Laura gira a varinha, Lara pula sem parar.
+
 ## 5. Poderes
 
 ### 5.1 Power-ups (caixas coloridas na fase)

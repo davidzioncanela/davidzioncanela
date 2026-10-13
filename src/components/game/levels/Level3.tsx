@@ -3,6 +3,7 @@
 import { CloudPlatform } from '../platforms/CloudPlatform';
 import { PowerUpBox } from '../powerups/PowerUpBox';
 import { Coin } from '../items/Coin';
+import { LowTunnel } from '../traversal/LowTunnel';
 import { Rope } from '../traversal/Rope';
 import { MonkeyBars } from '../traversal/Bars';
 import { Water } from '../traversal/Water';
@@ -41,7 +42,7 @@ export function Level3(props: LevelProps) {
       {...props}
       spawn={[-6, 2]}
       waves={WAVES}
-      monsters={[[3, 0.5], [30, 0.5], [57, 0.5], [68, 3]]}
+      monsters={[[3, 0.5], [30, 0.5], [68, 3]]}
       cage={[103, 11.3]}
       intro={[
         'Fase 3: Lago e Trepa-trepa!',
@@ -70,6 +71,7 @@ export function Level3(props: LevelProps) {
       <PowerUpBox position={[51, -3.5, 0]} type="float" />
 
       <Ground x1={54} x2={60} />
+      <LowTunnel x1={55} x2={59} />
 
       {/* Corda sobre o vão até o pilar */}
       <Rope id="l3-rope" anchor={[63, 9]} segments={8} />

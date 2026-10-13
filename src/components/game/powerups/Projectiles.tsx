@@ -41,7 +41,9 @@ function Projectile({ data }: { data: ProjectileData }) {
     } else if (data.owner === 'enemy') {
       players.forEach((pl) => {
         if (hit || !pl.local) return;
-        if (Math.abs(pl.position.x - p.x) < 0.5 && p.y > pl.position.y && p.y < pl.position.y + 1.4) {
+        // Agachado ou engatinhando o tiro passa por cima
+        const top = pl.position.y + (pl.low || pl.lying ? 0.55 : 1.4);
+        if (Math.abs(pl.position.x - p.x) < 0.5 && p.y > pl.position.y && p.y < top) {
           hit = true;
           if (useGameStore.getState().hurtPlayer(pl.id)) pl.pendingImpulse = { x: data.dir * 6, y: 5, z: 0 };
         }

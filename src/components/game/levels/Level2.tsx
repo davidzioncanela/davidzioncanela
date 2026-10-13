@@ -3,6 +3,7 @@
 import { CloudPlatform } from '../platforms/CloudPlatform';
 import { PowerUpBox } from '../powerups/PowerUpBox';
 import { Coin } from '../items/Coin';
+import { LowTunnel } from '../traversal/LowTunnel';
 import { Rope } from '../traversal/Rope';
 import { BranchTree } from '../traversal/Bars';
 import { Wave } from '@/lib/enemies';
@@ -39,7 +40,7 @@ export function Level2(props: LevelProps) {
       {...props}
       spawn={[-6, 2]}
       waves={WAVES}
-      monsters={[[2, 0.5], [32, 0.5], [58, 2], [96, 12.3]]}
+      monsters={[[32, 0.5], [58, 2], [96, 12.3]]}
       cage={[101, 12.3]}
       intro={[
         'Fase 2: Floresta das Cordas!',
@@ -48,6 +49,7 @@ export function Level2(props: LevelProps) {
       ]}
     >
       <Ground x1={-10} x2={10} />
+      <LowTunnel x1={3} x2={7} />
 
       {/* Abismo 1: três cordas */}
       <Rope id="r2-1" anchor={[14, 8]} />

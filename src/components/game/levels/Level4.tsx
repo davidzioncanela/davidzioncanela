@@ -3,6 +3,7 @@
 import { CloudPlatform } from '../platforms/CloudPlatform';
 import { PowerUpBox } from '../powerups/PowerUpBox';
 import { Coin } from '../items/Coin';
+import { LowTunnel } from '../traversal/LowTunnel';
 import { PipeMaze } from '../traversal/PipeMaze';
 import { Door } from '../traversal/Door';
 import { MonkeyBars } from '../traversal/Bars';
@@ -42,7 +43,7 @@ export function Level4(props: LevelProps) {
       {...props}
       spawn={[-6, 2]}
       waves={WAVES}
-      monsters={[[0, 0.5], [20, 0.5], [40, 0.5], [55, 0.5], [66, 8.5]]}
+      monsters={[[20, 0.5], [40, 0.5], [55, 0.5], [66, 8.5]]}
       cage={[90, 12.3]}
       intro={[
         'Fase 4: Encanamento!',
@@ -53,6 +54,7 @@ export function Level4(props: LevelProps) {
       ]}
     >
       <Ground x1={-10} x2={4.5} />
+      <LowTunnel x1={-1} x2={3} />
       {/* Laje fina por cima do labirinto 1, que fica no subsolo */}
       <Ground x1={4.5} x2={30} bottom={-0.5} />
       <PipeMaze id="l4-a" origin={[6, -3]} cols={6} rows={3} entranceY={0.5} exitY={0.5} seed={seed} />

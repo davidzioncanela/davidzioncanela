@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Group, MathUtils } from 'three';
-import { CharacterInfo } from '@/lib/characters';
+import { CapsuleCollider, RigidBody, RapierRigidBody } from '@react-three/rapier';
+import { CharacterInfo, capsuleFor } from '@/lib/characters';
 import { players, registerPlayer } from '@/lib/gameRuntime';
 import type { NetPlayerState } from '@/lib/protocol';
 import { CharacterModel } from '../characters/CharacterModel';
@@ -16,6 +17,8 @@ export const remoteStates = new Map<string, NetPlayerState>();
 // Jogador de outro aparelho: segue suavemente a posição recebida pela rede
 export function RemotePlayer({ character, position }: { character: CharacterInfo; position: [number, number, number] }) {
   const group = useRef<Group>(null);
+  const body = useRef<RapierRigidBody>(null);
+  const capsule = capsuleFor(character.height);
   const [view, setView] = useState({ anim: 'Idle', facing: 1 as 1 | -1, powerUp: null as string | null });
 
   useEffect(() => {
@@ -35,15 +38,22 @@ export function RemotePlayer({ character, position }: { character: CharacterInfo
     g.position.x = MathUtils.lerp(g.position.x, net.x, t);
     g.position.y = MathUtils.lerp(g.position.y, net.y, t);
     me.position = { x: g.position.x, y: g.position.y, z: 0 };
+    // Corpo cinemático acompanha: os outros esbarram e sobem em cima dele
+    body.current?.setNextKinematicTranslation({ x: g.position.x, y: g.position.y, z: 0 });
     me.velocity = { x: net.vx, y: net.vy, z: 0 };
     me.facing = net.facing;
     if (net.anim !== view.anim || net.facing !== view.facing || net.powerUp !== view.powerUp) setView({ anim: net.anim, facing: net.facing, powerUp: net.powerUp });
   });
 
   return (
-    <group ref={group} position={position}>
-      <CharacterModel model={character.model} animation={view.anim} accessories={character.gear} facing={view.facing} height={character.height} />
-      <PowerAura powerUp={view.powerUp as PowerUpType | null} height={character.height} shielded={false} />
-    </group>
+    <>
+      <RigidBody ref={body} type="kinematicPosition" position={position} colliders={false} userData={{ remote: character.id }}>
+        <CapsuleCollider args={[capsule.halfHeight, capsule.radius]} position={[0, capsule.centerY, 0]} />
+      </RigidBody>
+      <group ref={group} position={position}>
+        <CharacterModel model={character.model} animation={view.anim} accessories={character.gear} facing={view.facing} height={character.height} />
+        <PowerAura powerUp={view.powerUp as PowerUpType | null} height={character.height} shielded={false} />
+      </group>
+    </>
   );
 }

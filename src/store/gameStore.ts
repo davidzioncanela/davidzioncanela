@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { CharacterId } from '@/lib/characters';
 import type { NetWorld } from '@/lib/protocol';
 import { isGuest, sendEvent } from '@/lib/net';
+import { players } from '@/lib/gameRuntime';
 
 export type PowerUpType = 'laser' | 'super-speed' | 'float' | 'fire-ball' | 'super-jump';
 
@@ -75,6 +76,8 @@ interface GameActions {
   // Atualiza temporizadores do jogador (só re-renderiza quando o segundo inteiro muda)
   tickPlayer: (id: CharacterId, delta: number) => void;
   startHelpCooldown: (id: CharacterId, seconds: number) => void;
+  // Recarga extra do poder de ajuda (dançar)
+  rechargeHelp: (id: CharacterId, seconds: number) => void;
   giveShield: (id: CharacterId, seconds: number) => void;
   boostDamage: (seconds: number) => void;
   addCoin: () => void;
@@ -132,6 +135,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => {
       const now = performance.now();
       const p = get().players[id] ?? emptyPlayer();
       if (now < p.invulnerableUntil) return false;
+      // Deitado não recebe dano
+      if (players.get(id)?.lying) return false;
       if (now < p.shieldUntil) {
         patchPlayer(id, { shieldUntil: 0, invulnerableUntil: now + 800 });
         return false;
@@ -163,6 +168,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => {
     startHelpCooldown: (id, seconds) => {
       timers[id] = { powerUp: timers[id]?.powerUp ?? 0, help: seconds };
       patchPlayer(id, { helpCooldownLeft: seconds });
+    },
+    rechargeHelp: (id, seconds) => {
+      const t = timers[id];
+      if (t && t.help > 0) t.help = Math.max(0, t.help - seconds);
     },
     giveShield: (id, seconds) => patchPlayer(id, { shieldUntil: performance.now() + seconds * 1000 }),
     boostDamage: (seconds) => set({ damageBoostUntil: performance.now() + seconds * 1000 }),
