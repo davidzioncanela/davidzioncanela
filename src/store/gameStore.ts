@@ -199,7 +199,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => {
         collectedCoins: world.coins,
         screenLock: world.lock,
         enemies: world.enemies
-          .filter((e) => !e.dead)
+          .filter((e) => !e.dead && !e.field)
           .map((e) => ({ id: e.id, name: e.name, power: e.power, color: e.color, health: e.health, maxHealth: e.maxHealth })),
       }),
     upsertEnemy: (enemy) =>

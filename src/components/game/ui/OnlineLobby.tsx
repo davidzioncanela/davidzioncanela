@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Check, Copy, Crown, Play, Plus, Share2, LogIn, WifiOff } from 'lucide-react';
 import { getSocket, netSession, SERVER_URL, shareLink } from '@/lib/net';
+import { useTownStore } from '@/store/townStore';
 import { CHARACTERS, CHARACTER_ORDER, PlayerSlot } from '@/lib/characters';
 import { ROOM_ALPHABET, ROOM_CODE_LENGTH, type CharacterId, type RoomState } from '@/lib/protocol';
 
@@ -21,6 +22,8 @@ export function OnlineLobby({ initialCode, onStart, onBack }: OnlineLobbyProps) 
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const socket = getSocket();
+  // Quem já está na cidade entra com o mesmo nome e personagem
+  const me = useTownStore((s) => s.me);
 
   useEffect(() => {
     const onConnect = () => {
@@ -59,7 +62,7 @@ export function OnlineLobby({ initialCode, onStart, onBack }: OnlineLobbyProps) 
   }, [connected, initialCode]);
 
   const create = () =>
-    socket.emit('room:create', (res) => {
+    socket.emit('room:create', me, (res) => {
       if (res.ok) {
         setRoom(res.room);
         setError('');
@@ -67,7 +70,7 @@ export function OnlineLobby({ initialCode, onStart, onBack }: OnlineLobbyProps) 
     });
 
   const join = (value: string) =>
-    socket.emit('room:join', value, (res) => {
+    socket.emit('room:join', value, me, (res) => {
       if (res.ok) {
         setRoom(res.room);
         setError('');
@@ -92,7 +95,7 @@ export function OnlineLobby({ initialCode, onStart, onBack }: OnlineLobbyProps) 
   };
   const share = () => navigator.share?.({ title: 'Super Zion Brothers', text: `Entra na minha sala! Código ${room?.code}`, url: link }).catch(() => undefined);
 
-  const me = room?.members.find((m) => m.id === socket.id);
+  const mine = room?.members.find((m) => m.id === socket.id);
   const allPicked = !!room && room.members.every((m) => m.character);
 
   return (
@@ -167,7 +170,7 @@ export function OnlineLobby({ initialCode, onStart, onBack }: OnlineLobbyProps) 
             {room.members.map((m, i) => (
               <div key={m.id} className="hud-pill text-sm">
                 {m.host && <Crown size={14} className="text-[#FFC800]" />}
-                {m.id === socket.id ? 'Você' : `Jogador ${i + 1}`}: {m.character ? CHARACTERS[m.character].name : '...'}
+                {m.id === socket.id ? 'Você' : m.name ?? `Jogador ${i + 1}`}: {m.character ? CHARACTERS[m.character].name : '...'}
               </div>
             ))}
           </div>
@@ -197,7 +200,7 @@ export function OnlineLobby({ initialCode, onStart, onBack }: OnlineLobbyProps) 
             <button className="btn-duo btn-white sm:w-auto" onClick={leave}>
               <ArrowLeft size={18} /> Sair
             </button>
-            {me?.host ? (
+            {mine?.host ? (
               <button className="btn-duo btn-green flex-1" disabled={!allPicked} onClick={() => socket.emit('room:start')}>
                 <Play size={18} /> Começar ({room.members.length} {room.members.length === 1 ? 'jogador' : 'jogadores'})
               </button>

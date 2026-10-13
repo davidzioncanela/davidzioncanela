@@ -14,6 +14,7 @@ import { VictoryScreen } from './ui/VictoryScreen';
 import { CharacterSelect } from './ui/CharacterSelect';
 import { OnlineLobby } from './ui/OnlineLobby';
 import { getSocket, netSession } from '@/lib/net';
+import { usePartyStore } from '@/store/partyStore';
 import { InputProvider } from '@/contexts/InputContext';
 import { DeviceDetector, useIsTouch } from './ui/DeviceDetector';
 import { DuelHUD } from './ui/DuelHUD';
@@ -68,6 +69,8 @@ export default function GameCanvas() {
   useEffect(() => {
     if (slots) return;
     players.clear();
+    // A party/sala acaba quando a aventura termina
+    usePartyStore.getState().setRoom(null);
     if (netSession.active) {
       getSocket().emit('room:leave');
       netSession.active = false;
@@ -126,7 +129,7 @@ export default function GameCanvas() {
             {splitCount > 2 && <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 bg-white shadow-[0_0_12px_rgba(0,0,0,0.4)]" />}
           </div>
         )}
-        {!slots && !lobby && !choosing && <TownHUD onAdventure={() => setChoosing(true)} onRecenter={() => setRecenter((n) => n + 1)} />}
+        {!slots && !lobby && !choosing && <TownHUD onAdventure={() => setChoosing(true)} onRecenter={() => setRecenter((n) => n + 1)} onPartyStart={startGame} />}
         {!slots && !lobby && choosing && (
           <CharacterSelect
             isTouch={isTouch}

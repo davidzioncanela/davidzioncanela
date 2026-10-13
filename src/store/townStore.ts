@@ -51,3 +51,7 @@ export const useTownStore = create<TownState>((set) => ({
 }));
 
 export const BUBBLE_MS = 5000;
+
+if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+  (window as unknown as { __town: typeof useTownStore }).__town = useTownStore;
+}

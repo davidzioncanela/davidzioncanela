@@ -164,6 +164,14 @@ Documento vivo com as regras do jogo. Atualize sempre que uma regra mudar.
 - **NPCs** moradores passeiam perto de casa e falam frases (dicas do jogo) quando alguém chega perto ou clica neles.
 - O botão **Aventura** abre a escolha do modo: 1 jogador, 2 no teclado ou online.
 
+### 7.1 Party
+- Na cidade, tocar/clicar em outro jogador abre o cartão **Convidar para a party**.
+- Quem convida vira o **líder** (cria a sala na hora); o convidado recebe o aviso **Entrar / Agora não**.
+- Cada um entra com o personagem que usa na cidade; se outro integrante já estiver com ele, escolhe outro no painel.
+- Máximo de 4 integrantes. O painel mostra quem está na party e o código da sala (também dá para entrar pelo código/link).
+- O líder aperta **Começar aventura** quando todos têm personagem; todos entram juntos na mesma partida online.
+- Quando a aventura termina e todos voltam para a cidade, a party se desfaz (é preciso convidar de novo).
+
 ## 8. Visual
 - Botões no estilo Duolingo: cantos bem arredondados, cores vivas, borda inferior grossa que "afunda" ao clicar.
 - Fontes: Fredoka (títulos) e Nunito (textos).

@@ -10,8 +10,16 @@ export const MAX_ROOM_PLAYERS = 4;
 
 export interface RoomMember {
   id: string;
+  // Nome de quem entrou pela cidade (party)
+  name?: string;
   character: CharacterId | null;
   host: boolean;
+}
+
+// Quem entra na sala já com nome e personagem (vindo da cidade)
+export interface MemberProfile {
+  name: string;
+  character: CharacterId;
 }
 
 export interface RoomState {
@@ -42,6 +50,8 @@ export interface NetEnemy {
   // Modelo 3D e tom de cor do monstro
   model: string;
   tint: string;
+  // Monstrinho de patrulha (não entra no HUD da horda)
+  field: boolean;
   x: number;
   y: number;
   facing: 1 | -1;
@@ -79,6 +89,8 @@ export type NetEvent =
 export interface ServerToClient {
   'room:state': (room: RoomState) => void;
   'room:error': (message: string) => void;
+  // Convite para a party recebido na cidade
+  'party:invited': (invite: { fromId: string; fromName: string; code: string }) => void;
   'game:start': (payload: { slots: { character: CharacterId; memberId: string }[] }) => void;
   'game:player': (state: NetPlayerState) => void;
   'game:world': (world: NetWorld) => void;
@@ -91,11 +103,12 @@ export interface ServerToClient {
 }
 
 export interface ClientToServer {
-  'room:create': (ack: (res: { ok: true; room: RoomState } | { ok: false; error: string }) => void) => void;
-  'room:join': (code: string, ack: (res: { ok: true; room: RoomState } | { ok: false; error: string }) => void) => void;
+  'room:create': (profile: MemberProfile | null, ack: (res: { ok: true; room: RoomState } | { ok: false; error: string }) => void) => void;
+  'room:join': (code: string, profile: MemberProfile | null, ack: (res: { ok: true; room: RoomState } | { ok: false; error: string }) => void) => void;
   'room:pick': (character: CharacterId) => void;
   'room:start': () => void;
   'room:leave': () => void;
+  'party:invite': (targetId: string) => void;
   'game:player': (state: NetPlayerState) => void;
   'game:world': (world: NetWorld) => void;
   'game:event': (event: NetEvent) => void;

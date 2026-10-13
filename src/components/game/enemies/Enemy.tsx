@@ -45,7 +45,7 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
       alive: () => s.health > 0,
       snapshot: () => {
         const p = bodyRef.current?.translation() ?? { x: spawn.position[0], y: spawn.position[1] };
-        return { id, name, power: power.label, color: power.color, height: power.height, model: power.model, tint: spawn.tint, x: p.x, y: p.y, facing: s.facing, anim: s.anim, health: s.health, maxHealth, emerge: s.emerge, dead: s.dead };
+        return { id, name, power: power.label, color: power.color, height: power.height, model: power.model, tint: spawn.tint, field: !!spawn.field, x: p.x, y: p.y, facing: s.facing, anim: s.anim, health: s.health, maxHealth, emerge: s.emerge, dead: s.dead };
       },
       hit: (damage, fromX) => {
         if (s.health <= 0) return;

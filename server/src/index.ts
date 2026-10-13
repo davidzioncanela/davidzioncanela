@@ -33,16 +33,20 @@ io.on('connection', (socket) => {
   const roomChannel = (code: string) => `room:${code}`;
 
   // ---------- Salas da partida online ----------
-  socket.on('room:create', (ack) => {
+  socket.on('room:create', (profile, ack) => {
+    if (typeof ack !== 'function') return;
     leaveCurrentRoom();
-    const room = createRoom(socket.id);
+    const room = createRoom(socket.id, cleanProfile(profile));
     socket.join(roomChannel(room.code));
     ack({ ok: true, room: publicState(room) });
   });
 
-  socket.on('room:join', (code, ack) => {
+  socket.on('room:join', (code, profile, ack) => {
+    if (typeof ack !== 'function') return;
     if (typeof code !== 'string') return ack({ ok: false, error: 'Código inválido.' });
-    const result = joinRoom(code, socket.id);
+    const current = roomOf(socket.id);
+    if (current && current.code !== code.toUpperCase()) leaveCurrentRoom();
+    const result = joinRoom(code, socket.id, cleanProfile(profile));
     if (typeof result === 'string') return ack({ ok: false, error: result });
     socket.join(roomChannel(result.code));
     ack({ ok: true, room: publicState(result) });
@@ -68,6 +72,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('room:leave', () => leaveCurrentRoom());
+
+  // Party na cidade: convida outra pessoa para a sala de quem convida
+  socket.on('party:invite', (targetId) => {
+    const room = roomOf(socket.id);
+    const me = town.get(socket.id);
+    if (!room || !me || room.started || typeof targetId !== 'string' || !town.has(targetId)) return;
+    io.to(targetId).emit('party:invited', { fromId: socket.id, fromName: me.name, code: room.code });
+  });
 
   // Durante a partida o servidor só repassa as mensagens para a sala
   socket.on('game:player', (state) => {
@@ -115,6 +127,12 @@ io.on('connection', (socket) => {
     leaveCurrentRoom();
     if (town.delete(socket.id)) io.to(TOWN).emit('town:leave', socket.id);
   });
+
+  function cleanProfile(p: unknown) {
+    const profile = p as { name?: unknown; character?: unknown } | null;
+    if (!profile || !CHARACTERS.includes(profile.character as CharacterId)) return null;
+    return { name: String(profile.name ?? '').trim().slice(0, 20) || 'Jogador', character: profile.character as CharacterId };
+  }
 
   function leaveCurrentRoom() {
     const room = roomOf(socket.id);

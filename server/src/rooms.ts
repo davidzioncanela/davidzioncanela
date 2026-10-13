@@ -1,4 +1,4 @@
-import { MAX_ROOM_PLAYERS, ROOM_ALPHABET, ROOM_CODE_LENGTH, type CharacterId, type RoomState } from '../../src/lib/protocol.js';
+import { MAX_ROOM_PLAYERS, ROOM_ALPHABET, ROOM_CODE_LENGTH, type CharacterId, type MemberProfile, type RoomState } from '../../src/lib/protocol.js';
 
 interface Room extends RoomState {
   createdAt: number;
@@ -19,19 +19,21 @@ export function normalizeCode(code: string) {
   return code.trim().toUpperCase().slice(0, ROOM_CODE_LENGTH);
 }
 
-export function createRoom(hostId: string): Room {
-  const room: Room = { code: newCode(), members: [{ id: hostId, character: null, host: true }], started: false, createdAt: Date.now() };
+export function createRoom(hostId: string, profile: MemberProfile | null): Room {
+  const room: Room = { code: newCode(), members: [{ id: hostId, name: profile?.name, character: profile?.character ?? null, host: true }], started: false, createdAt: Date.now() };
   rooms.set(room.code, room);
   return room;
 }
 
-export function joinRoom(code: string, memberId: string): Room | string {
+export function joinRoom(code: string, memberId: string, profile: MemberProfile | null): Room | string {
   const room = rooms.get(normalizeCode(code));
   if (!room) return 'Sala não encontrada. Confira o código.';
   if (room.members.some((m) => m.id === memberId)) return room;
   if (room.started) return 'A partida desta sala já começou.';
   if (room.members.length >= MAX_ROOM_PLAYERS) return 'A sala já tem 4 jogadores.';
-  room.members.push({ id: memberId, character: null, host: false });
+  // Já entra com o personagem da cidade, se ninguém da sala estiver com ele
+  const free = profile && !room.members.some((m) => m.character === profile.character);
+  room.members.push({ id: memberId, name: profile?.name, character: free ? profile.character : null, host: false });
   return room;
 }
 

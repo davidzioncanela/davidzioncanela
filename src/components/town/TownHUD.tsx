@@ -7,16 +7,19 @@ import { CHAT_MAX_LENGTH, type CharacterId } from '@/lib/protocol';
 import { getSocket } from '@/lib/net';
 import { useTownStore } from '@/store/townStore';
 import { useTownNet } from './TownNet';
+import { PartyHUD } from './PartyHUD';
+import type { PlayerSlot } from '@/lib/characters';
 
 const STORAGE_KEY = 'szb:town-me';
 
 interface TownHUDProps {
   onAdventure: () => void;
   onRecenter: () => void;
+  onPartyStart: (slots: PlayerSlot[]) => void;
 }
 
 // Interface da cidade: entrada (nome + personagem), chat, pessoas online e botão de aventura
-export function TownHUD({ onAdventure, onRecenter }: TownHUDProps) {
+export function TownHUD({ onAdventure, onRecenter, onPartyStart }: TownHUDProps) {
   const me = useTownStore((s) => s.me);
   const setMe = useTownStore((s) => s.setMe);
   useTownNet();
@@ -53,6 +56,7 @@ export function TownHUD({ onAdventure, onRecenter }: TownHUDProps) {
         </div>
       </div>
       <ChatPanel />
+      <PartyHUD onStart={onPartyStart} />
       <p className="pointer-events-none absolute bottom-3 right-3 hidden max-w-[260px] text-right text-xs font-bold text-white drop-shadow sm:block">
         Toque no chão para andar · arraste para girar · roda/pinça para zoom · botão direito ou 2 dedos para mover a câmera
       </p>

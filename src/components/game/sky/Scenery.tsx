@@ -203,7 +203,7 @@ export function Scenery({ from = -60, to = 140, skyOnly = false, groundY = -6 }:
         <Prop key={`n${i}`} piece={p.piece} position={[p.x, groundY, -22 - (i % 3) * 4]} scale={p.s} rotation={p.r} />
       ))}
       {/* Castelo do Bowser Jr. no fim da fase e moinhos pelo caminho */}
-      <Prop piece="castle" position={[92, groundY, -30]} scale={9} />
+      <Prop piece="castle" position={[to - 10, groundY, -70]} scale={12} />
       <Prop piece="windmill" position={[20, groundY, -38]} scale={7} />
       <Prop piece="watermill" position={[55, groundY, -34]} scale={6} rotation={1} />
       <DriftingClouds from={from} to={to} />
