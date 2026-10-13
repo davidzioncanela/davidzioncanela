@@ -39,6 +39,9 @@ export interface NetEnemy {
   power: string;
   color: string;
   height: number;
+  // Modelo 3D e tom de cor do monstro
+  model: string;
+  tint: string;
   x: number;
   y: number;
   facing: 1 | -1;
@@ -57,6 +60,9 @@ export interface NetWorld {
   coins: number;
   gameState: string;
   cageOpen: boolean;
+  // Fase atual (índice); o host avança e os convidados acompanham
+  level: number;
+  seed: number;
 }
 
 export type NetEvent =

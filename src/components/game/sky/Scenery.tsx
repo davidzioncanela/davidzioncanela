@@ -157,8 +157,9 @@ function DriftingClouds({ from, to }: { from: number; to: number }) {
 
 // Cenário lúdico em camadas (parallax natural da câmera perspectiva)
 // skyOnly: só céu, sol, arco-íris e nuvens (usado na cidade)
-export function Scenery({ from = -60, to = 140, skyOnly = false }: { from?: number; to?: number; skyOnly?: boolean }) {
+export function Scenery({ from = -60, to = 140, skyOnly = false, groundY = -6 }: { from?: number; to?: number; skyOnly?: boolean; groundY?: number }) {
   const layers = useMemo(() => {
+    // groundY: altura do chão de fundo (alinhada com a base dos blocos de terra das fases)
     const rnd = seeded(42);
     const far: { piece: Piece; x: number; s: number; r: number }[] = [];
     for (let x = from; x < to; x += 16 + rnd() * 10) far.push({ piece: (['mountainA', 'mountainB', 'mountainC'] as Piece[])[Math.floor(rnd() * 3)], x, s: 9 + rnd() * 6, r: rnd() * 6 });
@@ -187,23 +188,24 @@ export function Scenery({ from = -60, to = 140, skyOnly = false }: { from?: numb
       <Sun />
       <Rainbow />
       {/* Chão lá embaixo, visto de cima das nuvens */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[40, -14, -40]} receiveShadow>
-        <planeGeometry args={[600, 200]} />
+      {/* Só atrás da cena (z < -3), para não tampar o que fica abaixo do chão, como os canos */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[40, groundY, -73]} receiveShadow>
+        <planeGeometry args={[600, 140]} />
         <meshStandardMaterial color="#7ED957" />
       </mesh>
       {layers.far.map((p, i) => (
-        <Prop key={`f${i}`} piece={p.piece} position={[p.x, -14, -110]} scale={p.s} rotation={p.r} />
+        <Prop key={`f${i}`} piece={p.piece} position={[p.x, groundY, -110]} scale={p.s} rotation={p.r} />
       ))}
       {layers.mid.map((p, i) => (
-        <Prop key={`m${i}`} piece={p.piece} position={[p.x, -14, -60]} scale={p.s} rotation={p.r} />
+        <Prop key={`m${i}`} piece={p.piece} position={[p.x, groundY, -60]} scale={p.s} rotation={p.r} />
       ))}
       {layers.near.map((p, i) => (
-        <Prop key={`n${i}`} piece={p.piece} position={[p.x, -14, -22 - (i % 3) * 4]} scale={p.s} rotation={p.r} />
+        <Prop key={`n${i}`} piece={p.piece} position={[p.x, groundY, -22 - (i % 3) * 4]} scale={p.s} rotation={p.r} />
       ))}
       {/* Castelo do Bowser Jr. no fim da fase e moinhos pelo caminho */}
-      <Prop piece="castle" position={[92, -14, -30]} scale={9} />
-      <Prop piece="windmill" position={[20, -14, -38]} scale={7} />
-      <Prop piece="watermill" position={[55, -14, -34]} scale={6} rotation={1} />
+      <Prop piece="castle" position={[92, groundY, -30]} scale={9} />
+      <Prop piece="windmill" position={[20, groundY, -38]} scale={7} />
+      <Prop piece="watermill" position={[55, groundY, -34]} scale={6} rotation={1} />
       <DriftingClouds from={from} to={to} />
       {/* Poeira mágica flutuando pelo céu */}
       <Sparkles count={160} scale={[200, 40, 40]} position={[40, 10, -20]} size={6} speed={0.4} color="#FFF7AE" opacity={0.8} />

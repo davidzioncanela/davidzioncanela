@@ -1,16 +1,19 @@
 'use client';
 
-import { PartyPopper, RotateCcw, Users } from 'lucide-react';
+import { ArrowRight, PartyPopper, RotateCcw, Users } from 'lucide-react';
 import { CHARACTERS, PlayerSlot, teamSetup } from '@/lib/characters';
 import { useGameStore } from '@/store/gameStore';
 
 interface VictoryScreenProps {
   slots: PlayerSlot[];
-  onRestart: () => void;
+  onRestart?: () => void;
+  onNext?: () => void;
+  // Convidado online esperando o anfitrião avançar
+  waiting?: boolean;
   onSelectTeam: () => void;
 }
 
-export function VictoryScreen({ slots, onRestart, onSelectTeam }: VictoryScreenProps) {
+export function VictoryScreen({ slots, onRestart, onNext, waiting, onSelectTeam }: VictoryScreenProps) {
   const score = useGameStore((s) => s.score);
   const { captives } = teamSetup(slots);
   const everyone = Object.values(CHARACTERS).map((c) => c.name);
@@ -26,11 +29,19 @@ export function VictoryScreen({ slots, onRestart, onSelectTeam }: VictoryScreenP
         <p className="mt-2 font-bold text-gray-500">{everyone.join(', ').replace(/, ([^,]*)$/, ' e $1')} vão brincar juntos na pracinha!</p>
         <p className="mb-6 mt-4 font-title text-2xl text-[#CE82FF]">{score} pontos</p>
         <div className="flex flex-col gap-3">
-          <button className="btn-duo btn-green w-full" onClick={onRestart}>
-            <RotateCcw size={18} /> Jogar de novo
-          </button>
+          {onNext && (
+            <button className="btn-duo btn-green w-full" onClick={onNext}>
+              Próxima fase <ArrowRight size={18} />
+            </button>
+          )}
+          {waiting && <div className="rounded-2xl bg-[#DDF4FF] px-4 py-3 text-sm font-extrabold text-[#1899D6]">Esperando o anfitrião ir para a próxima fase...</div>}
+          {onRestart && (
+            <button className={`btn-duo w-full ${onNext ? 'btn-white' : 'btn-green'}`} onClick={onRestart}>
+              <RotateCcw size={18} /> Jogar de novo
+            </button>
+          )}
           <button className="btn-duo btn-white w-full" onClick={onSelectTeam}>
-            <Users size={18} /> Trocar personagens
+            <Users size={18} /> Voltar para a cidade
           </button>
         </div>
       </div>

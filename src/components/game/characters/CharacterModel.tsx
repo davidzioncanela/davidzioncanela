@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useAnimations, useGLTF } from '@react-three/drei';
 import { SkeletonUtils } from 'three-stdlib';
-import { Box3, Group, LoopOnce, Mesh, Vector3 } from 'three';
+import { Box3, Color, Group, LoopOnce, Mesh, MeshStandardMaterial, Vector3 } from 'three';
 
 // Modelos KayKit Adventurers (CC0) - ver public/assets/models/LICENSE-KayKit.txt
 export const MODELS = {
@@ -12,6 +12,11 @@ export const MODELS = {
   mage: '/assets/models/Mage.glb',
   rogue: '/assets/models/Rogue.glb',
   rogueHooded: '/assets/models/Rogue_Hooded.glb',
+  // Monstros: KayKit Skeletons (CC0) - ver public/assets/monsters/LICENSE-KayKit.txt
+  minion: '/assets/monsters/Skeleton_Minion.glb',
+  skWarrior: '/assets/monsters/Skeleton_Warrior.glb',
+  skMage: '/assets/monsters/Skeleton_Mage.glb',
+  skRogue: '/assets/monsters/Skeleton_Rogue.glb',
 } as const;
 
 export type ModelName = keyof typeof MODELS;
@@ -28,9 +33,15 @@ interface CharacterModelProps {
   height?: number;
   facing?: 1 | -1;
   blink?: boolean;
+  // Mostra todas as peças do modelo (monstros)
+  showAll?: boolean;
+  // Tom de cor da roupa/corpo (variedade entre monstros iguais)
+  tint?: string;
+  // Cor do brilho (olhos dos monstros)
+  glow?: string;
 }
 
-export function CharacterModel({ model, animation, accessories = [], height = 1.25, facing = 1, blink = false }: CharacterModelProps) {
+export function CharacterModel({ model, animation, accessories = [], height = 1.25, facing = 1, blink = false, showAll = false, tint, glow }: CharacterModelProps) {
   const group = useRef<Group>(null);
   const { scene, animations } = useGLTF(MODELS[model]);
   // Cada instância precisa do próprio esqueleto
@@ -43,10 +54,29 @@ export function CharacterModel({ model, animation, accessories = [], height = 1.
       if ((obj as Mesh).isMesh) {
         obj.castShadow = true;
         const isBodyPart = obj.name.includes('_Body') || obj.name.includes('_Head') || obj.name.includes('_Arm') || obj.name.includes('_Leg');
-        if (!isBodyPart) obj.visible = accessories.includes(obj.name);
+        if (!isBodyPart && !showAll) obj.visible = accessories.includes(obj.name);
       }
     });
-  }, [clone, accessories]);
+  }, [clone, accessories, showAll]);
+
+  // Cores próprias desta instância (materiais copiados para não afetar os outros)
+  useEffect(() => {
+    if (!tint && !glow) return;
+    clone.traverse((obj) => {
+      const mesh = obj as Mesh;
+      if (!mesh.isMesh) return;
+      const mat = (mesh.material as MeshStandardMaterial).clone();
+      if (mat.name === 'Glow' && glow) {
+        mat.color.set(glow);
+        mat.emissive = new Color(glow);
+        mat.emissiveIntensity = 2.5;
+        mat.toneMapped = false;
+      } else if (mat.name !== 'Glow' && tint) {
+        mat.color.multiply(new Color(tint));
+      }
+      mesh.material = mat;
+    });
+  }, [clone, tint, glow]);
 
   useEffect(() => {
     const action = actions[animation];

@@ -69,13 +69,13 @@ export function Companion({ character, leader, position = [1, 1, 0], frozen = fa
       ref={bodyRef}
       position={position}
       colliders={false}
-      mass={0.8}
       lockRotations
       enabledTranslations={[true, true, false]}
       friction={0}
       userData={{ companion: true }}
     >
-      <CapsuleCollider args={[capsule.halfHeight, capsule.radius]} position={[0, capsule.centerY, 0]} />
+      {/* Peso proporcional ao tamanho: afunda mais as nuvens */}
+      <CapsuleCollider args={[capsule.halfHeight, capsule.radius]} position={[0, capsule.centerY, 0]} mass={character.height * 0.8} />
       <CharacterModel model={character.model} animation={animation} accessories={character.gear} facing={facing} height={character.height} />
     </RigidBody>
   );

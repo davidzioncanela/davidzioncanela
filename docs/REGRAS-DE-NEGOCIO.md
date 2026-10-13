@@ -55,22 +55,30 @@ Documento vivo com as regras do jogo. Atualize sempre que uma regra mudar.
   - poderes de ajuda valem para os jogadores próximos em qualquer aparelho.
 - Cada aparelho mostra só o cartão do próprio jogador no HUD.
 
-## 4. Fase e desafios (estilo Metal Slug)
+## 4. Fases e desafios (estilo Metal Slug)
 
-- A fase é percorrida da esquerda para a direita: nuvens que descem para a Terra e depois chão de grama.
-- Os desafios acontecem **durante a jornada**: ao passar por pontos da fase surge uma **onda de inimigos**.
-- Durante uma onda a **tela trava** (ninguém avança) até todos os inimigos da onda serem derrotados.
-- Cada inimigo tem **nome aleatório** (ex.: "Boom Cruel") e **um poder próprio**:
+- As fases são **progressivas**: começam na terra e vão subindo até as alturas; as hordas finais acontecem **nas nuvens**.
+- Cada fase dá **ênfase a um elemento** e tem só pitadas dos outros:
 
-| Poder | Comportamento | Vida base |
-|---|---|---|
-| Bola de fogo | mantém distância e lança bolas de fogo que quicam | 40 |
-| Raio laser | mantém distância e atira raios | 35 |
-| Super veloz | corre até o jogador e golpeia | 30 |
-| Saltador | pula em cima do jogador | 35 |
-| Gigante (chefe) | grande, lento e resistente; guarda a gaiola | 120 |
+| Fase | Nome | Ênfase | Pitadas |
+|---|---|---|---|
+| 1 | Da Terra às Nuvens | nuvens com física | uma corda |
+| 2 | Floresta das Cordas | cordas com física | árvore de galhos |
+| 3 | Lago e Trepa-trepa | natação e barras | uma corda, nuvens elásticas |
+| 4 | Encanamento | labirintos de canos e portas | trepa-trepa curto |
 
-- Pontos: inimigo comum 200, chefe 500, moeda 100.
+- Ao vencer uma fase aparece **Próxima fase**; no online só o anfitrião avança e os outros acompanham.
+- `?fase=N` na URL começa direto na fase N (para testes).
+
+### 4.0 Nuvens com física
+- Cada nuvem é presa por uma "mola" ao seu ponto de descanso: **afunda proporcionalmente ao peso** de quem está em cima e **se estabiliza**; quando todos saem, volta balançando.
+- O peso de cada personagem depende do tamanho (Laura pesa mais que Lara).
+- Tipos: **firme** (quase não afunda), **que afunda** (cede bastante), **elástica** (rosa, arremessa para cima) e **à deriva** (passeia para os lados; quem está em cima vai junto).
+
+### 4.0.1 Monstros
+- Inimigos são monstros 3D (KayKit Skeletons, CC0) com **cor sorteada** e **olhos brilhando na cor do poder**.
+- **Durante a fase**: monstrinhos pequenos patrulham o caminho; perseguem quem chega perto; pular na cabeça derrota (estilo Mario).
+- **Nos desafios (hordas)**: monstros maiores — magos (fogo/raio), ladinos (veloz/saltador) e o guerreiro **Gigante** (chefe).
 
 ### 4.1 Dificuldade por quantidade de jogadores
 - A dificuldade cresce com o número de jogadores na sessão (1 a 4):
@@ -87,7 +95,12 @@ Documento vivo com as regras do jogo. Atualize sempre que uma regra mudar.
 
 ### 4.3 Elementos de travessia dos mapas
 - **Cordas** com física: o personagem pula, se pendura e balança junto com a corda; pula de uma corda para outra.
-- **Canos para rastejar**: labirintos de encanamento gerados aleatoriamente, com subidas, descidas e escorregadores em diagonal (declive).
+- **Labirintos de canos** (sempre aleatórios, simples, diferentes a cada partida):
+  - visão de **raio-X**: o cano aparece fatiado (metade de trás) e dá para ver quem está dentro;
+  - entra agachando (↓) em cima da boca verde; lá dentro as setas escolhem o caminho em cada junção;
+  - **escadas** sobem e descem; **escorregadores com água** (diagonais) descem sozinhos; **rampas molhadas** se sobem empurrando, mas quem solta escorrega de volta (física escorregadia);
+  - cada ponto novo descoberto vale **10 pontos**; **becos sem saída** guardam prêmios (3 moedas, 300 pontos ou um power-up);
+  - **minimapa** mostra só o que já foi descoberto (trechos vistos de relance aparecem tracejados), a entrada, a saída e os jogadores.
 - **Natação** em alguns mapas: dentro da água a gravidade diminui, o pulo vira braçada e há fôlego limitado.
 - **Galhos** e **barras horizontais**: o personagem se pendura e atravessa mão a mão.
 - **Portas** de entrada e saída ao longo do mapa, ligando áreas como num labirinto.

@@ -6,7 +6,7 @@ import { Group, MathUtils } from 'three';
 import type { NetEnemy } from '@/lib/protocol';
 import { enemyRegistry } from '@/lib/gameRuntime';
 import { sendEvent } from '@/lib/net';
-import { CharacterModel } from '../characters/CharacterModel';
+import { CharacterModel, type ModelName } from '../characters/CharacterModel';
 
 // Últimas fotos dos inimigos recebidas do host
 export const enemySnapshots = new Map<string, NetEnemy>();
@@ -50,7 +50,7 @@ export function EnemyPuppet({ id }: { id: string }) {
   return (
     <group ref={group} position={[first.x, first.y, 0]}>
       <group ref={model}>
-        <CharacterModel model="rogueHooded" animation={view.anim} accessories={['Knife', 'Rogue_Cape']} facing={view.facing} height={first.height} />
+        <CharacterModel model={first.model as ModelName} animation={view.anim} facing={view.facing} height={first.height} showAll tint={first.tint} glow={first.color} />
       </group>
       {!first.dead && (
         <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>

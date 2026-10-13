@@ -131,6 +131,8 @@ export function NetSync({ gameState, setGameState, cageOpen, setCageOpen }: NetS
         coins: store.collectedCoins,
         gameState: live.current.gameState === 'dialog' ? 'playing' : live.current.gameState,
         cageOpen: live.current.cageOpen,
+        level: netSession.level,
+        seed: netSession.seed,
       });
     }
 

@@ -8,7 +8,7 @@ import { GameHUD } from './ui/GameHUD';
 import { DialogBox } from './ui/DialogBox';
 import { CameraController } from './CameraController';
 import { SplitScreen } from './SplitScreen';
-import { Level1, LEVEL1_BOUNDS } from './levels/Level1';
+import { LEVELS } from './levels/levels';
 import { GameOverScreen } from './ui/GameOverScreen';
 import { VictoryScreen } from './ui/VictoryScreen';
 import { CharacterSelect } from './ui/CharacterSelect';
@@ -17,6 +17,8 @@ import { getSocket, netSession } from '@/lib/net';
 import { InputProvider } from '@/contexts/InputContext';
 import { DeviceDetector, useIsTouch } from './ui/DeviceDetector';
 import { DuelHUD } from './ui/DuelHUD';
+import { PipeMinimap } from './ui/PipeMinimap';
+import { FadeOverlay } from './ui/FadeOverlay';
 import { SkySystem } from './sky/SkySystem';
 import { Scenery } from './sky/Scenery';
 import { Town } from '../town/Town';
@@ -32,6 +34,9 @@ export default function GameCanvas() {
   const [slots, setSlots] = useState<PlayerSlot[] | null>(null);
   // Muda a cada partida para remontar a fase do zero
   const [runId, setRunId] = useState(0);
+  const [levelIndex, setLevelIndex] = useState(0);
+  // Semente das partes aleatórias (canos); no online vem do host
+  const [seed, setSeed] = useState(1);
   const [gameState, setGameState] = useState<GameState>('playing');
   const [dialogText, setDialogText] = useState<string[]>([]);
   const [splitCount, setSplitCount] = useState(0);
@@ -46,8 +51,12 @@ export default function GameCanvas() {
     if (code) setLobby({ code: code.toUpperCase() });
   }, []);
 
-  const startGame = useCallback((next: PlayerSlot[]) => {
+  const startGame = useCallback((next: PlayerSlot[], level = 0, nextSeed = Math.floor(Math.random() * 1e6) + 1) => {
     players.clear();
+    setLevelIndex(level);
+    setSeed(nextSeed);
+    netSession.level = level;
+    netSession.seed = nextSeed;
     useGameStore.getState().reset(next.map((s) => s.character));
     setGameState('playing');
     setSlots(next);
@@ -65,6 +74,24 @@ export default function GameCanvas() {
     }
   }, [slots]);
 
+  const level = LEVELS[levelIndex];
+  const Level = level.Component;
+  const hasNext = levelIndex + 1 < LEVELS.length;
+  // Online: só o host avança de fase; os convidados seguem quando a foto do mundo muda de fase
+  const canAdvance = !netSession.active || netSession.isHost;
+
+  useEffect(() => {
+    if (!slots || !netSession.active || netSession.isHost) return;
+    const socket = getSocket();
+    const onWorld = (w: { level: number; seed: number }) => {
+      if (w.level !== levelIndex || w.seed !== seed) startGame(slots, w.level, w.seed);
+    };
+    socket.on('game:world', onWorld);
+    return () => {
+      socket.off('game:world', onWorld);
+    };
+  }, [slots, levelIndex, seed, startGame]);
+
   return (
     <InputProvider>
       <div className="relative h-[100dvh] w-screen">
@@ -77,10 +104,10 @@ export default function GameCanvas() {
                 <SkySystem />
                 <Scenery />
                 <Physics key={runId} gravity={[0, -25, 0]}>
-                  <Level1 slots={slots} gameState={gameState} setGameState={setGameState} setDialogText={setDialogText} />
+                  <Level slots={slots} gameState={gameState} setGameState={setGameState} setDialogText={setDialogText} seed={seed} />
                 </Physics>
-                <CameraController gameState={gameState} bounds={LEVEL1_BOUNDS} />
-                <SplitScreen bounds={LEVEL1_BOUNDS} onSplitChange={setSplitCount} />
+                <CameraController gameState={gameState} bounds={level.bounds} />
+                <SplitScreen bounds={level.bounds} onSplitChange={setSplitCount} />
               </>
             ) : (
               <Town recenter={recenter} />
@@ -104,7 +131,9 @@ export default function GameCanvas() {
             isTouch={isTouch}
             onStart={(next) => {
               setChoosing(false);
-              startGame(next);
+              // ?fase=N começa direto numa fase (útil para testar)
+              const fase = Number(new URLSearchParams(window.location.search).get('fase'));
+              startGame(next, fase >= 1 && fase <= LEVELS.length ? fase - 1 : 0);
             }}
             onOnline={() => (setChoosing(false), setLobby({}))}
             onBack={() => setChoosing(false)}
@@ -125,13 +154,15 @@ export default function GameCanvas() {
         )}
         {slots && (
           <>
-            <GameHUD slots={slots} onSwitch={() => setSlots(null)} compact={isTouch} />
+            <GameHUD slots={slots} onSwitch={() => setSlots(null)} compact={isTouch} levelNumber={levelIndex + 1} levelName={level.name} />
             <DuelHUD />
+            <PipeMinimap />
+            <FadeOverlay />
           </>
         )}
         {gameState === 'dialog' && <DialogBox text={dialogText} onClose={() => setGameState('playing')} />}
-        {slots && gameState === 'gameOver' && <GameOverScreen onRestart={() => (netSession.active ? setSlots(null) : startGame(slots))} onSelectTeam={() => setSlots(null)} />}
-        {slots && gameState === 'victory' && <VictoryScreen slots={slots} onRestart={() => (netSession.active ? setSlots(null) : startGame(slots))} onSelectTeam={() => setSlots(null)} />}
+        {slots && gameState === 'gameOver' && <GameOverScreen onRestart={canAdvance ? () => startGame(slots, levelIndex) : undefined} onSelectTeam={() => setSlots(null)} />}
+        {slots && gameState === 'victory' && <VictoryScreen slots={slots} onNext={hasNext && canAdvance ? () => startGame(slots, levelIndex + 1) : undefined} waiting={hasNext && !canAdvance} onRestart={canAdvance ? () => startGame(slots, levelIndex) : undefined} onSelectTeam={() => setSlots(null)} />}
         {slots && slots.filter((s) => !s.remote).length === 1 && <DeviceDetector />}
       </div>
     </InputProvider>

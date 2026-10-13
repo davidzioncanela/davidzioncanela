@@ -1,170 +1,91 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Player } from '../characters/Player';
-import { Companion } from '../characters/Companion';
-import { Captive } from '../characters/Captive';
-import { WaveManager } from '../enemies/WaveManager';
 import { CloudPlatform } from '../platforms/CloudPlatform';
-import { GrassPlatform } from '../platforms/GrassPlatform';
 import { PowerUpBox } from '../powerups/PowerUpBox';
-import { Projectiles } from '../powerups/Projectiles';
 import { Coin } from '../items/Coin';
-import { TextBoxTrigger } from '../dialogs/TextBoxTrigger';
-import { GameState } from '../GameCanvas';
-import { useGameStore } from '@/store/gameStore';
-import { CHARACTERS, PlayerSlot, teamSetup } from '@/lib/characters';
+import { Rope } from '../traversal/Rope';
 import { Wave } from '@/lib/enemies';
-import { isGuest, netSession, sendEvent } from '@/lib/net';
-import { NetSync } from '../net/NetSync';
-import { RemotePlayer } from '../net/RemotePlayer';
+import { Ground, LevelProps, LevelShell } from './LevelShell';
 
-interface Level1Props {
-  slots: PlayerSlot[];
-  gameState: GameState;
-  setGameState: (state: GameState) => void;
-  setDialogText: (text: string[]) => void;
-}
+export const LEVEL1_BOUNDS: [number, number] = [-10, 134];
 
-export const LEVEL1_BOUNDS: [number, number] = [-12, 80];
-
-// Pontos de nascimento: cada jogador começa numa das primeiras nuvens
-const SPAWNS: [number, number, number][] = [
-  [-12, 16, 0],
-  [-13, 16, 0],
-  [-11, 16, 0],
-  [-12.5, 17, 0],
-];
-
-// Hordas estilo Metal Slug: a tela trava na arena e os inimigos chegam em levas
 const WAVES: Wave[] = [
   {
-    triggerX: 17,
-    arena: { left: 15, right: 27, floorY: 1.75 },
+    triggerX: 70,
+    arena: { left: 68.5, right: 81.5, floorY: 14.3 },
     groups: [
       { delay: 0, from: 'left', count: 1 },
       { delay: 0, from: 'right', count: 2 },
       { delay: 4, from: 'sky', count: 3 },
-      { delay: 9, from: 'ground', count: 2 },
+      { delay: 9, from: 'right', count: 2 },
     ],
   },
   {
-    triggerX: 43,
-    arena: { left: 41, right: 55, floorY: 3.25 },
-    groups: [
-      { delay: 0, from: 'right', count: 3 },
-      { delay: 3, from: 'sky', count: 3 },
-      { delay: 7, from: 'left', count: 2 },
-      { delay: 11, from: 'ground', count: 3 },
-    ],
-  },
-  {
-    triggerX: 66,
-    arena: { left: 64, right: 80, floorY: 0.5 },
+    triggerX: 118,
+    arena: { left: 116.5, right: 133.5, floorY: 18.3 },
     groups: [
       { delay: 0, from: 'left', count: 2 },
       { delay: 0, from: 'right', count: 2 },
-      { delay: 4, from: 'ground', count: 3 },
-      { delay: 8, from: 'sky', count: 3 },
+      { delay: 4, from: 'sky', count: 4 },
+      { delay: 8, from: 'ground', count: 2 },
       { delay: 12, from: 'right', count: 1, power: 'gigante' },
     ],
   },
 ];
 
-export function Level1({ slots, gameState, setGameState, setDialogText }: Level1Props) {
-  const [cageOpen, setCageOpen] = useState(false);
-  const { companion, captives } = teamSetup(slots);
-  const team = slots.map((s) => CHARACTERS[s.character]);
-  const frozen = gameState === 'dialog' || gameState === 'gameOver' || gameState === 'victory';
-  const names = (list: { name: string }[]) => list.map((c) => c.name).join(' e ');
-
-  const lives = useGameStore((s) => s.lives);
-  useEffect(() => {
-    if (lives <= 0) setGameState('gameOver');
-  }, [lives, setGameState]);
-
-  const heroes = companion ? [...team, companion] : team;
-
+// Fase 1 — Da Terra às Nuvens. Ênfase: nuvens com física (afundam com o peso e se
+// estabilizam, quicam como cama elástica, passeiam à deriva). Pitada: uma corda no fim.
+export function Level1(props: LevelProps) {
   return (
-    <group>
-      {/* Nuvens descendo para a Terra */}
-      <CloudPlatform position={[-12, 14, 0]} scale={[4, 0.5, 3]} animated targetY={10} delay={0.3} speed={1.3} float floatSpeed={0.5} floatRange={0.3} />
-      <CloudPlatform position={[-6, 12, 0]} scale={[4, 0.5, 3]} animated targetY={8} delay={0.6} speed={1.3} float floatSpeed={0.6} floatRange={0.25} />
-      <CloudPlatform position={[0, 10, 0]} scale={[4, 0.5, 3]} animated targetY={6} delay={0.9} speed={1.3} float floatSpeed={0.7} floatRange={0.3} />
-      <CloudPlatform position={[6, 8, 0]} scale={[4, 0.5, 3]} animated targetY={4} delay={1.2} speed={1.3} float floatSpeed={0.55} floatRange={0.25} />
-      <CloudPlatform position={[11, 6, 0]} scale={[4, 0.5, 3]} animated targetY={2.5} delay={1.5} speed={1.3} float floatSpeed={0.65} floatRange={0.3} />
+    <LevelShell
+      {...props}
+      spawn={[-7, 2]}
+      waves={WAVES}
+      monsters={[[5, 0.5], [23, 3.5], [75, 14.3]]}
+      cage={[131, 18.3]}
+      intro={[
+        'Fase 1: Da Terra às Nuvens!',
+        'Vamos subir até as nuvens, onde o Bowser Jr. esconde a gaiola.',
+        'As nuvens têm vida própria: algumas afundam com o peso (e afundam mais com mais gente em cima!), as rosas são elásticas e outras passeiam.',
+        'Segure ↓ por 2 segundos e solte para dar um Super Pulo!',
+      ]}
+    >
+      {/* Na terra: chão e degraus de grama subindo */}
+      <Ground x1={-12} x2={12} />
+      <Ground x1={15} x2={19} top={2} />
+      <Ground x1={21} x2={25} top={3.5} />
+      <Ground x1={27} x2={30} top={5} />
+      <Coin position={[17, 3.5, 0]} />
+      <Coin position={[23, 5, 0]} />
+      <PowerUpBox position={[5, 2.5, 0]} type="super-jump" />
 
-      <TextBoxTrigger
-        position={[-12, 12, 0]}
-        text={[
-          `${names(heroes)}: Precisamos resgatar ${captives.length ? names(captives) : 'a chave da pracinha'}!`,
-          captives.length
-            ? `Bowser Jr. prendeu ${captives.map((c) => `${c.name} (${c.age})`).join(' e ')} numa gaiola no fim da fase!`
-            : 'Bowser Jr. trancou a chave da pracinha numa gaiola no fim da fase!',
-          'Em alguns pontos a tela trava e chega uma horda: inimigos pelos lados, do céu e do chão!',
-          slots.length > 1
-            ? 'Jogador 1: W A S D, F ataca, G poder de ajuda. Jogador 2: setas, K ataca, L poder de ajuda.'
-            : 'Setas ou A/D andam, Espaço pula, F ataca e G usa o poder de ajuda.',
-          'Segure ↓ por 2 segundos e solte para dar um Super Pulo!',
-        ]}
-        setGameState={setGameState}
-        setDialogText={setDialogText}
-      />
+      {/* Subindo pelas nuvens: firme, que afunda, elástica e à deriva */}
+      <CloudPlatform position={[34, 6.5, 0]} scale={[4, 0.5, 3]} kind="firme" />
+      <CloudPlatform position={[40, 8, 0]} scale={[3.5, 0.5, 3]} kind="afunda" />
+      <CloudPlatform position={[45, 6.5, 0]} scale={[3, 0.5, 3]} kind="elastica" />
+      <CloudPlatform position={[50, 13, 0]} scale={[4, 0.5, 3]} kind="firme" />
+      <CloudPlatform position={[57, 13.5, 0]} scale={[4, 0.5, 3]} kind="deriva" driftRange={2.5} />
+      <CloudPlatform position={[63.5, 14, 0]} scale={[3.5, 0.5, 3]} kind="afunda" />
+      <Coin position={[40, 10, 0]} />
+      <Coin position={[45, 12, 0]} />
+      <Coin position={[57, 15.5, 0]} />
 
-      <Coin position={[-6, 9.5, 0]} />
-      <Coin position={[0, 7.5, 0]} />
-      <Coin position={[6, 5.5, 0]} />
-      <PowerUpBox position={[3, 9, 0]} type="super-jump" />
+      {/* Arena 1: ilha de nuvem firme */}
+      <CloudPlatform position={[75, 14, 0]} scale={[14, 0.6, 4]} kind="firme" />
+      <PowerUpBox position={[75, 17, 0]} type="fire-ball" />
 
-      {/* Arena 1: ilha de nuvem */}
-      <CloudPlatform position={[21, 1.5, 0]} scale={[14, 0.5, 4]} />
-      <PowerUpBox position={[21, 4.5, 0]} type="super-speed" />
-      <Coin position={[18, 3, 0]} />
-      <Coin position={[24, 3, 0]} />
+      {/* Mais alto: deriva, elástica, afunda e uma corda até a ilha final */}
+      <CloudPlatform position={[88, 15, 0]} scale={[4, 0.5, 3]} kind="deriva" driftRange={2} />
+      <CloudPlatform position={[94, 13, 0]} scale={[3, 0.5, 3]} kind="elastica" />
+      <CloudPlatform position={[100, 19, 0]} scale={[4, 0.5, 3]} kind="firme" />
+      <CloudPlatform position={[106, 19, 0]} scale={[3.5, 0.5, 3]} kind="afunda" />
+      <Rope id="rope-l1" anchor={[111, 25]} segments={7} />
+      <PowerUpBox position={[100, 22, 0]} type="laser" />
+      <Coin position={[94, 17, 0]} />
+      <Coin position={[106, 21, 0]} />
 
-      <CloudPlatform position={[32, 3, 0]} scale={[3.5, 0.5, 3]} float floatSpeed={0.6} floatRange={0.3} />
-      <CloudPlatform position={[37, 4, 0]} scale={[3.5, 0.5, 3]} float floatSpeed={0.7} floatRange={0.25} />
-      <PowerUpBox position={[34.5, 7, 0]} type="float" />
-      <Coin position={[32, 4.5, 0]} />
-      <Coin position={[37, 5.5, 0]} />
-
-      {/* Arena 2: ilha de nuvem mais alta */}
-      <CloudPlatform position={[48, 3, 0]} scale={[16, 0.5, 4]} />
-      <PowerUpBox position={[48, 6, 0]} type="fire-ball" />
-
-      <CloudPlatform position={[59.5, 2, 0]} scale={[3.5, 0.5, 3]} float floatSpeed={0.6} floatRange={0.25} />
-      <PowerUpBox position={[59.5, 5, 0]} type="laser" />
-
-      <TextBoxTrigger
-        position={[59.5, 3.5, 0]}
-        text={['Chegamos em Terra firme!', 'O capanga Gigante guarda a gaiola. Usem os poderes de ajuda juntos!']}
-        setGameState={setGameState}
-        setDialogText={setDialogText}
-      />
-
-      {/* Arena final: chão de grama com a gaiola */}
-      <GrassPlatform position={[74, 0, 0]} scale={[22, 1, 6]} />
-
-      {/* No modo online só o host simula as hordas; os convidados veem os bonecos sincronizados */}
-      {!isGuest() && <WaveManager waves={WAVES} setGameState={setGameState} onAllCleared={() => setCageOpen(true)} />}
-
-      <Captive characters={captives} position={[82, 0.5, 0]} canRescue={cageOpen}
-        onRescued={() => {
-          sendEvent({ type: 'rescued' });
-          setGameState('victory');
-        }}
-      />
-
-      {slots.map((slot, i) =>
-        slot.remote ? (
-          <RemotePlayer key={slot.character} character={CHARACTERS[slot.character]} position={SPAWNS[i]} />
-        ) : (
-          <Player key={slot.character} character={CHARACTERS[slot.character]} input={slot.input} position={SPAWNS[i]} frozen={frozen} />
-        )
-      )}
-      {companion && <Companion character={companion} leader={slots[0].character} position={SPAWNS[1]} frozen={frozen} />}
-      <Projectiles />
-      {netSession.active && <NetSync gameState={gameState} setGameState={setGameState} cageOpen={cageOpen} setCageOpen={setCageOpen} />}
-    </group>
+      {/* Arena final: ilha de nuvem com a gaiola */}
+      <CloudPlatform position={[125, 18, 0]} scale={[18, 0.6, 4]} kind="firme" />
+    </LevelShell>
   );
 }

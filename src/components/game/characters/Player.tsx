@@ -11,6 +11,7 @@ import { sendEvent } from '@/lib/net';
 import { CharacterInfo, InputScheme, capsuleFor } from '@/lib/characters';
 import { isPressed } from '@/lib/controls';
 import { CharacterModel } from './CharacterModel';
+import { newTraversalState, updateTraversal } from './traversal';
 import { PowerAura, HelpBurst } from '../effects/PowerEffects';
 
 interface PlayerProps {
@@ -53,6 +54,7 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
     sinceJumpPressed: 99,
     jumpHeld: false,
     helpHeld: false,
+    crouchHeld: false,
     crouchTime: 0,
     attackCooldown: 0,
     attackAnim: 0,
@@ -60,6 +62,8 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
     // Último ponto em chão firme, usado para reaparecer após uma queda
     safe: { x: position[0], y: position[1] },
   });
+  // Corda, barra, cano, água e portas
+  const trav = useRef(newTraversalState());
 
   useEffect(() => {
     const runtime = registerPlayer(id, true, { x: position[0], y: position[1], z: 0 });
@@ -109,7 +113,10 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
     // Chão: raio curto saindo dos pés
     const ray = new rapier.Ray({ x: pos.x, y: pos.y + 0.1, z: 0 }, { x: 0, y: -1, z: 0 });
     const hit = world.castRay(ray, 0.2, true, undefined, undefined, undefined, body);
-    const grounded = !!hit && vel.y <= 0.5;
+    // Velocidade da plataforma embaixo (nuvens se mexem): o personagem anda junto com ela
+    const ground = hit?.collider.parent();
+    const plat = ground && ground.isDynamic() ? ground.linvel() : { x: 0, y: 0 };
+    const grounded = !!hit && vel.y - plat.y <= 0.5;
     s.sinceGrounded = grounded ? 0 : s.sinceGrounded + delta;
     me.position = { x: pos.x, y: pos.y, z: pos.z };
     me.grounded = grounded;
@@ -130,6 +137,33 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
     const crouch = isPressed(k, input, 'crouch');
     const attack = isPressed(k, input, 'attack');
     const help = isPressed(k, input, 'help');
+    const dirInput = (right ? 1 : 0) - (left ? 1 : 0);
+
+    // Modos especiais de travessia controlam o personagem por conta própria
+    const special = updateTraversal({
+      body,
+      me,
+      t: trav.current,
+      input: { dir: dirInput, jump, jumpEdge: jump && !s.jumpHeld, crouch, crouchEdge: crouch && !s.crouchHeld },
+      delta,
+      grounded,
+      height: character.height,
+      onDrown: () => {
+        store.loseLife();
+        me.pendingTeleport = { x: s.safe.x, y: s.safe.y + 2, z: 0 };
+      },
+    });
+    s.crouchHeld = crouch;
+    if (special) {
+      s.jumpHeld = jump;
+      if (crouchState !== 'none') setCrouchState('none');
+      if (dirInput !== 0 && dirInput !== facing) setFacing(dirInput as 1 | -1);
+      me.velocity = { x: special.vx ?? 0, y: special.vy ?? 0, z: 0 };
+      me.grounded = false;
+      me.animation = special.anim;
+      if (special.anim !== animation) setAnimation(special.anim);
+      return;
+    }
 
     // Agachar: carrega o super pulo (2s agachado, solta para pular)
     const crouching = crouch && grounded;
@@ -141,9 +175,9 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
     if (nextCrouch !== crouchState) setCrouchState(nextCrouch);
 
     // Movimento horizontal com aceleração rápida (sensação de plataforma)
-    const dir = (right ? 1 : 0) - (left ? 1 : 0);
+    const dir = dirInput;
     const speed = powerUp === 'super-speed' ? FAST_SPEED : WALK_SPEED;
-    const targetVx = crouching ? 0 : dir * speed;
+    const targetVx = (crouching ? 0 : dir * speed) + (grounded ? plat.x : 0);
     const accel = grounded ? 40 : 20;
     let vx = vel.x + Math.sign(targetVx - vel.x) * Math.min(Math.abs(targetVx - vel.x), accel * delta);
     if (dir !== 0 && dir !== facing) setFacing(dir as 1 | -1);
@@ -221,14 +255,14 @@ export function Player({ character, input, position = [0, 1, 0], frozen = false 
       ref={bodyRef}
       position={position}
       colliders={false}
-      mass={1}
       lockRotations
       enabledTranslations={[true, true, false]}
       friction={0}
       ccd
       userData={{ player: id }}
     >
-      <CapsuleCollider args={[capsule.halfHeight, capsule.radius]} position={[0, capsule.centerY, 0]} />
+      {/* Peso proporcional ao tamanho: afunda mais as nuvens */}
+      <CapsuleCollider args={[capsule.halfHeight, capsule.radius]} position={[0, capsule.centerY, 0]} mass={character.height * 0.8} />
       <CharacterModel model={character.model} animation={animation} accessories={character.gear} facing={facing} height={character.height} blink={blinking} />
       <PowerAura powerUp={power} height={character.height} shielded={shielded} />
       <HelpBurst trigger={helpBurst} power={character.help.id} />

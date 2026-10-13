@@ -21,6 +21,9 @@ export const netSession = {
   active: false,
   isHost: false,
   code: '',
+  // Fase e semente da partida atual (enviadas pelo host)
+  level: 0,
+  seed: 1,
 };
 
 // Envia um evento da partida para os outros aparelhos (não faz nada fora do modo online)

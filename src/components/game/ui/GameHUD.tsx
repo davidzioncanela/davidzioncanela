@@ -9,6 +9,8 @@ import { POWER_COLORS } from '../effects/PowerEffects';
 interface GameHUDProps {
   slots: PlayerSlot[];
   compact?: boolean;
+  levelNumber: number;
+  levelName: string;
   onSwitch: () => void;
 }
 
@@ -22,7 +24,7 @@ const POWER_LABELS: Record<string, string> = {
 
 const keyLabel = (k: string) => (k === ' ' ? 'Espaço' : k.length === 1 ? k.toUpperCase() : k);
 
-export function GameHUD({ slots, onSwitch, compact = false }: GameHUDProps) {
+export function GameHUD({ slots, onSwitch, compact = false, levelNumber, levelName }: GameHUDProps) {
   // Cada aparelho mostra só os cartões dos próprios jogadores
   const localSlots = slots.filter((s) => !s.remote);
   const lives = useGameStore((s) => s.lives);
@@ -52,8 +54,8 @@ export function GameHUD({ slots, onSwitch, compact = false }: GameHUDProps) {
         </div>
         <div className="flex flex-col items-end gap-2">
           <div className="hud-pill flex-col !gap-0 text-center">
-            <span className="text-[10px] uppercase tracking-widest text-gray-400">Fase 1</span>
-            <span className="font-title text-base">Nas Nuvens</span>
+            <span className="text-[10px] uppercase tracking-widest text-gray-400">Fase {levelNumber}</span>
+            <span className="font-title text-base">{levelName}</span>
           </div>
           <button onClick={onSwitch} className="btn-duo btn-yellow pointer-events-auto !px-3 !py-1.5 text-xs">
             <Users size={16} /> Trocar

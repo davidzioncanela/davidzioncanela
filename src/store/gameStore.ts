@@ -36,9 +36,11 @@ export interface PlayerHud {
   helpCooldownLeft: number;
   invulnerableUntil: number;
   shieldUntil: number;
+  // Fôlego embaixo d'água (0 a 1)
+  breath: number;
 }
 
-const emptyPlayer = (): PlayerHud => ({ powerUp: null, powerUpTimeLeft: 0, helpCooldownLeft: 0, invulnerableUntil: 0, shieldUntil: 0 });
+const emptyPlayer = (): PlayerHud => ({ powerUp: null, powerUpTimeLeft: 0, helpCooldownLeft: 0, invulnerableUntil: 0, shieldUntil: 0, breath: 1 });
 
 interface GameState {
   score: number;
@@ -55,6 +57,10 @@ interface GameState {
   // Trava de tela durante uma onda: ninguém passa destes limites
   screenLock: [number, number] | null;
   projectiles: Projectile[];
+  // Escurece a tela ao passar por uma porta
+  fadeAt: number;
+  // Nós já descobertos em cada labirinto de canos (para o minimapa)
+  discovered: Record<string, number[]>;
   // Moedas e caixas já pegas (somem em todos os aparelhos da sessão)
   pickedUp: string[];
 }
@@ -78,6 +84,10 @@ interface GameActions {
   spawnProjectile: (p: Omit<Projectile, 'id'>) => void;
   removeProjectile: (id: number) => void;
   markPicked: (key: string) => void;
+  setBreath: (id: CharacterId, breath: number) => void;
+  fade: () => void;
+  // Marca um nó do labirinto como descoberto; retorna true se era novo
+  discover: (maze: string, node: number) => boolean;
   // Convidado online: copia o placar e a horda enviados pelo host
   applyWorld: (world: NetWorld) => void;
   reset: (playerIds: CharacterId[]) => void;
@@ -95,6 +105,8 @@ const initialState: GameState = {
   screenLock: null,
   projectiles: [],
   pickedUp: [],
+  fadeAt: 0,
+  discovered: {},
 };
 
 let nextProjectileId = 1;
@@ -157,6 +169,18 @@ export const useGameStore = create<GameState & GameActions>((set, get) => {
     addCoin: () => {
       if (isGuest()) sendEvent({ type: 'coin' });
       set((state) => ({ collectedCoins: state.collectedCoins + 1, score: state.score + 100 }));
+    },
+    // Só re-renderiza o HUD a cada 10% de fôlego
+    setBreath: (id, breath) => {
+      const old = get().players[id]?.breath ?? 1;
+      if (Math.round(old * 10) !== Math.round(breath * 10)) patchPlayer(id, { breath });
+    },
+    fade: () => set({ fadeAt: performance.now() }),
+    discover: (maze, node) => {
+      const known = get().discovered[maze] ?? [];
+      if (known.includes(node)) return false;
+      set((state) => ({ discovered: { ...state.discovered, [maze]: [...known, node] } }));
+      return true;
     },
     markPicked: (key) => set((state) => (state.pickedUp.includes(key) ? state : { pickedUp: [...state.pickedUp, key] })),
     applyWorld: (world) =>

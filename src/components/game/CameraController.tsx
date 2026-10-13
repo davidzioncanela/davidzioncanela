@@ -21,6 +21,7 @@ export function CameraController({ gameState, bounds }: CameraControllerProps) {
   const target = useRef(new THREE.Vector3(-12, 14, 12));
   const lookAt = useRef(new THREE.Vector3(-12, 12, 0));
   const desiredLook = useRef(new THREE.Vector3());
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') (window as unknown as { __camera: THREE.Camera }).__camera = camera;
 
   useFrame((_, delta) => {
     const span = playerSpan(true);

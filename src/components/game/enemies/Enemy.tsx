@@ -34,18 +34,18 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
   const [facing, setFacing] = useState<1 | -1>(-1);
   const [dead, setDead] = useState(false);
   const capsule = capsuleFor(power.height);
-  const state = useRef({ anim: 'Idle', facing: -1 as 1 | -1, dead: false, health: maxHealth, attackTimer: 2 + Math.random(), hurtTimer: 0, actionAnim: 0, emerge: entry === 'ground' ? 1 : 0 });
+  const state = useRef({ patrol: -1 as 1 | -1, anim: 'Idle', facing: -1 as 1 | -1, dead: false, health: maxHealth, attackTimer: 2 + Math.random(), hurtTimer: 0, actionAnim: 0, emerge: entry === 'ground' ? 1 : 0 });
 
   useEffect(() => {
     const s = state.current;
     const hud = { id, name, power: power.label, color: power.color, maxHealth };
-    useGameStore.getState().upsertEnemy({ ...hud, health: s.health });
+    if (!spawn.field) useGameStore.getState().upsertEnemy({ ...hud, health: s.health });
     enemyRegistry.set(id, {
       getPosition: () => bodyRef.current?.translation() ?? { x: spawn.position[0], y: spawn.position[1], z: 0 },
       alive: () => s.health > 0,
       snapshot: () => {
         const p = bodyRef.current?.translation() ?? { x: spawn.position[0], y: spawn.position[1] };
-        return { id, name, power: power.label, color: power.color, height: power.height, x: p.x, y: p.y, facing: s.facing, anim: s.anim, health: s.health, maxHealth, emerge: s.emerge, dead: s.dead };
+        return { id, name, power: power.label, color: power.color, height: power.height, model: power.model, tint: spawn.tint, x: p.x, y: p.y, facing: s.facing, anim: s.anim, health: s.health, maxHealth, emerge: s.emerge, dead: s.dead };
       },
       hit: (damage, fromX) => {
         if (s.health <= 0) return;
@@ -56,14 +56,14 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
           const dir = Math.sign(body.translation().x - fromX) || 1;
           body.setLinvel({ x: dir * 3, y: 3, z: 0 }, true);
         }
-        useGameStore.getState().upsertEnemy({ ...hud, health: s.health });
+        if (!spawn.field) useGameStore.getState().upsertEnemy({ ...hud, health: s.health });
       },
     });
     return () => {
       enemyRegistry.delete(id);
       useGameStore.getState().removeEnemy(id);
     };
-  }, [id, name, power, maxHealth, spawn.position]);
+  }, [id, name, power, maxHealth, spawn.position, spawn.field]);
 
   useFrame((_, delta) => {
     const body = bodyRef.current;
@@ -98,7 +98,20 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
     const player = target.position;
     const dx = player.x - pos.x;
     const dist = Math.hypot(dx, player.y - pos.y);
-    const dir = (Math.sign(dx) || 1) as 1 | -1;
+
+    // Pisão na cabeça (estilo Mario): quem cai em cima derrota o monstrinho e quica
+    if (target.local && target.velocity.y < -2 && Math.abs(dx) < 0.7 && player.y > pos.y + power.height * 0.6 && player.y < pos.y + power.height + 0.6) {
+      enemyRegistry.get(id)?.hit(spawn.field ? 999 : 15, player.x);
+      target.pendingImpulse = { x: 0, y: 11, z: 0 };
+    }
+
+    // Monstrinho de patrulha: anda de um lado para o outro até alguém chegar perto
+    const chasing = !spawn.field || dist < 6;
+    if (!chasing) {
+      const out = Math.abs(pos.x - spawn.position[0]) > 3;
+      if (out) s.patrol = pos.x > spawn.position[0] ? -1 : 1;
+    }
+    const dir = (chasing ? Math.sign(dx) || 1 : s.patrol) as 1 | -1;
     s.facing = dir;
     if (dir !== facing) setFacing(dir);
 
@@ -128,8 +141,11 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
         sendEvent({ type: 'projectile', ...shot });
       }
     } else {
-      // Corpo a corpo: persegue e golpeia
-      if (Math.abs(dx) > MELEE_RANGE * 0.8 && groundAhead) vx = dir * power.speed;
+      // Corpo a corpo: persegue e golpeia (ou patrulha devagar)
+      if (!chasing) {
+        if (groundAhead) vx = dir * power.speed * 0.5;
+        else s.patrol = -s.patrol as 1 | -1;
+      } else if (Math.abs(dx) > MELEE_RANGE * 0.8 && groundAhead) vx = dir * power.speed;
       if (power.jumps && grounded && s.attackTimer <= 0 && dist < 6) {
         vy = 9;
         vx = dir * power.speed * 1.5;
@@ -168,7 +184,7 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
       {!dead && <CapsuleCollider args={[capsule.halfHeight, capsule.radius]} position={[0, capsule.centerY, 0]} />}
       {dead && <CapsuleCollider args={[0.05, 0.2]} position={[0, 0.2, 0]} />}
       <group ref={modelRef} position={[0, entry === 'ground' ? -power.height : 0, 0]}>
-        <CharacterModel model="rogueHooded" animation={animation} accessories={ROGUE_GEAR} facing={facing} height={power.height} />
+        <CharacterModel model={power.model} animation={animation} facing={facing} height={power.height} showAll tint={spawn.tint} glow={power.color} />
       </group>
       {/* Efeito de entrada: poeira saindo do chão ou rastro caindo do céu */}
       {entry === 'ground' && !dead && <Sparkles count={30} scale={[1.5, 0.6, 1.5]} position={[0, 0.2, 0]} size={8} speed={2} color="#A16207" />}
@@ -184,4 +200,3 @@ export function Enemy({ spawn, onDefeated }: EnemyProps) {
   );
 }
 
-const ROGUE_GEAR = ['Knife', 'Rogue_Cape'];
