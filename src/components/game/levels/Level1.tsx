@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Player } from '../characters/Player';
 import { Companion } from '../characters/Companion';
 import { Captive } from '../characters/Captive';
-import { NPC } from '../enemies/NPC';
+import { WaveManager } from '../enemies/WaveManager';
+import { Wave } from '@/lib/enemies';
 import { CloudPlatform } from '../platforms/CloudPlatform';
 import { GrassPlatform } from '../platforms/GrassPlatform';
 import { PowerUpBox } from '../powerups/PowerUpBox';
@@ -24,16 +25,25 @@ interface Level1Props {
 
 const SPAWN: [number, number, number] = [-12, 16, 0];
 
+// Ondas de inimigos ao longo da jornada (posições de nascimento acima das plataformas)
+const WAVES: Wave[] = [
+  { triggerX: -1, lock: [-3, 8], spawns: [{ position: [6, 7, 0] }] },
+  { triggerX: 13, lock: [10, 20], spawns: [{ position: [18, 6, 0] }, { position: [12, 6, 0] }] },
+  { triggerX: 29, lock: [27, 38], spawns: [{ position: [36, 5, 0] }, { position: [24, 6, 0] }] },
+  { triggerX: 42, lock: [41, 54], spawns: [{ position: [48, 3, 0] }, { position: [52, 3, 0] }, { position: [50, 4, 0], power: 'gigante' }] },
+];
+
 export function Level1({ team, gameState, setGameState, setDialogText }: Level1Props) {
   const [guardDefeated, setGuardDefeated] = useState(false);
   const { leader, partner, captives } = TEAMS[team];
   const frozen = gameState === 'dialog' || gameState === 'gameOver' || gameState === 'victory';
 
-  const handleFall = useCallback(() => {
-    const store = useGameStore.getState();
-    store.loseLife();
-    if (store.lives <= 1) setGameState('gameOver');
-  }, [setGameState]);
+  const lives = useGameStore((s) => s.lives);
+  useEffect(() => {
+    if (lives <= 0) setGameState('gameOver');
+  }, [lives, setGameState]);
+
+  const handleFall = useCallback(() => useGameStore.getState().loseLife(), []);
 
   return (
     <group>
@@ -78,8 +88,8 @@ export function Level1({ team, gameState, setGameState, setDialogText }: Level1P
         position={[36, 3, 0]}
         text={[
           'Cuidado! Estamos chegando em Terra firme...',
-          'Bowser Jr. deixou um capanga guardando a gaiola!',
-          'Preparem-se para o duelo! Pegue o Laser para atacar de longe.',
+          'Bowser Jr. deixou o capanga Gigante guardando a gaiola!',
+          'Preparem-se! Pegue o Laser para atacar de longe.',
         ]}
         setGameState={setGameState}
         setDialogText={setDialogText}
@@ -88,7 +98,7 @@ export function Level1({ team, gameState, setGameState, setDialogText }: Level1P
       <GrassPlatform position={[50, 0, 0]} scale={[18, 1, 6]} />
       <PowerUpBox position={[42.5, 2, 0]} type="laser" />
 
-      <NPC position={[50, 1, 0]} name="Goomba Malandro" health={100} setGameState={setGameState} onDefeated={() => setGuardDefeated(true)} />
+      <WaveManager waves={WAVES} setGameState={setGameState} onAllCleared={() => setGuardDefeated(true)} />
 
       <Captive characters={captives} position={[56, 0.5, 0]} canRescue={guardDefeated} onRescued={() => setGameState('victory')} />
 

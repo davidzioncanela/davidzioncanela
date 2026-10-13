@@ -130,13 +130,18 @@ export function Player({ character, position = [0, 1, 0], frozen = false, onFall
     // Flutuar: segurando pulo enquanto cai, a queda fica lenta
     if (power === 'float' && jump && vy < -2) vy = -2;
 
+    // Trava de tela durante uma onda de inimigos
+    const lock = store.screenLock;
+    let lockedVx = vx;
+    if (lock && ((pos.x <= lock[0] && vx < 0) || (pos.x >= lock[1] && vx > 0))) lockedVx = 0;
+
     // Golpe recebido
     if (playerRuntime.pendingKnockback) {
       const kb = playerRuntime.pendingKnockback;
       playerRuntime.pendingKnockback = null;
       body.setLinvel({ x: kb.x, y: kb.y, z: 0 }, true);
     } else {
-      body.setLinvel({ x: vx, y: vy, z: 0 }, true);
+      body.setLinvel({ x: lockedVx, y: vy, z: 0 }, true);
     }
 
     // Ataque: laser / bola de fogo / espadada
@@ -147,7 +152,7 @@ export function Player({ character, position = [0, 1, 0], frozen = false, onFall
       s.attackCooldown = ATTACK_COOLDOWN;
       s.attackAnim = 0.3;
       if (power === 'laser' || power === 'fire-ball') {
-        store.spawnProjectile({ kind: power, x: pos.x + face * 0.6, y: pos.y + 0.9, dir: face });
+        store.spawnProjectile({ kind: power, x: pos.x + face * 0.6, y: pos.y + 0.9, dir: face, owner: 'player' });
       } else {
         findEnemyNear(pos.x + face * 0.9, pos.y + 0.8, 1.1)?.hit(10, pos.x);
       }

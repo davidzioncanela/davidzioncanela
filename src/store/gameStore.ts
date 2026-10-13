@@ -4,12 +4,22 @@ export type PowerUpType = 'laser' | 'super-speed' | 'float' | 'fire-ball' | 'sup
 
 export const POWER_UP_DURATION = 15;
 
+export interface EnemyHud {
+  id: string;
+  name: string;
+  power: string;
+  color: string;
+  health: number;
+  maxHealth: number;
+}
+
 export interface Projectile {
   id: number;
   kind: 'laser' | 'fire-ball';
   x: number;
   y: number;
   dir: 1 | -1;
+  owner: 'player' | 'enemy';
 }
 
 interface GameState {
@@ -20,12 +30,10 @@ interface GameState {
   activePowerUp: PowerUpType | null;
   powerUpTimeLeft: number;
   playerName: 'david' | 'yohann';
-  isDuelActive: boolean;
-  currentNPC: {
-    name: string;
-    health: number;
-    maxHealth: number;
-  } | null;
+  // Inimigos vivos na onda atual (para o HUD)
+  enemies: EnemyHud[];
+  // Trava de tela durante uma onda: o jogador não passa destes limites
+  screenLock: [number, number] | null;
   invulnerableUntil: number;
   projectiles: Projectile[];
 }
@@ -39,10 +47,9 @@ interface GameActions {
   tickPowerUp: (delta: number) => void;
   setLevel: (level: number) => void;
   addCoin: () => void;
-  startDuel: (npc: { name: string; health: number; maxHealth: number }) => void;
-  updateDuelHealth: (health: number) => void;
-  endDuel: () => void;
-  damageNPC: (damage: number) => void;
+  upsertEnemy: (enemy: EnemyHud) => void;
+  removeEnemy: (id: string) => void;
+  setScreenLock: (lock: [number, number] | null) => void;
   spawnProjectile: (p: Omit<Projectile, 'id'>) => void;
   removeProjectile: (id: number) => void;
   reset: () => void;
@@ -50,14 +57,14 @@ interface GameActions {
 
 const initialState: GameState = {
   score: 0,
-  lives: 3,
+  lives: 5,
   level: 1,
   collectedCoins: 0,
   activePowerUp: null,
   powerUpTimeLeft: 0,
   playerName: 'david',
-  isDuelActive: false,
-  currentNPC: null,
+  enemies: [],
+  screenLock: null,
   invulnerableUntil: 0,
   projectiles: [],
 };
@@ -75,7 +82,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   hurtPlayer: () => {
     const now = performance.now();
     if (now < get().invulnerableUntil) return false;
-    set((state) => ({ lives: Math.max(0, state.lives - 1), invulnerableUntil: now + 1500 }));
+    set((state) => ({ lives: Math.max(0, state.lives - 1), invulnerableUntil: now + 2500 }));
     return true;
   },
   setActivePowerUp: (powerUp) => {
@@ -91,23 +98,12 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
   setLevel: (level) => set({ level }),
   addCoin: () => set((state) => ({ collectedCoins: state.collectedCoins + 1, score: state.score + 100 })),
-  startDuel: (npc) => set({ isDuelActive: true, currentNPC: npc }),
-  updateDuelHealth: (health) => {
-    const currentNPC = get().currentNPC;
-    if (currentNPC) set({ currentNPC: { ...currentNPC, health } });
-  },
-  endDuel: () => set({ isDuelActive: false, currentNPC: null }),
-  damageNPC: (damage) => {
-    const currentNPC = get().currentNPC;
-    if (currentNPC) {
-      const newHealth = Math.max(0, currentNPC.health - damage);
-      if (newHealth === 0) {
-        set({ currentNPC: { ...currentNPC, health: 0 }, isDuelActive: false });
-      } else {
-        set({ currentNPC: { ...currentNPC, health: newHealth } });
-      }
-    }
-  },
+  upsertEnemy: (enemy) =>
+    set((state) => ({
+      enemies: state.enemies.some((e) => e.id === enemy.id) ? state.enemies.map((e) => (e.id === enemy.id ? enemy : e)) : [...state.enemies, enemy],
+    })),
+  removeEnemy: (id) => set((state) => ({ enemies: state.enemies.filter((e) => e.id !== id) })),
+  setScreenLock: (lock) => set({ screenLock: lock }),
   spawnProjectile: (p) => set((state) => ({ projectiles: [...state.projectiles, { ...p, id: nextProjectileId++ }] })),
   removeProjectile: (id) => set((state) => ({ projectiles: state.projectiles.filter((p) => p.id !== id) })),
   reset: () => {

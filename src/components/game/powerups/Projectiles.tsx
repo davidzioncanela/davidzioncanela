@@ -4,12 +4,15 @@ import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Mesh } from 'three';
 import { Projectile as ProjectileData, useGameStore } from '@/store/gameStore';
-import { findEnemyNear } from '@/lib/gameRuntime';
+import { findEnemyNear, playerRuntime } from '@/lib/gameRuntime';
 
 const CONFIG = {
   laser: { speed: 28, damage: 25, ttl: 0.6 },
   'fire-ball': { speed: 11, damage: 20, ttl: 1.6 },
 } as const;
+
+// Tiros inimigos são mais lentos para dar tempo de desviar
+const ENEMY_SPEED = 0.45;
 
 function Projectile({ data }: { data: ProjectileData }) {
   const ref = useRef<Mesh>(null);
@@ -20,7 +23,7 @@ function Projectile({ data }: { data: ProjectileData }) {
     const p = s.current;
     if (p.done || !ref.current) return;
     p.age += delta;
-    p.x += data.dir * cfg.speed * delta;
+    p.x += data.dir * cfg.speed * (data.owner === 'enemy' ? ENEMY_SPEED : 1) * delta;
     if (data.kind === 'fire-ball') {
       // Bola de fogo quica em arco
       p.vy -= 18 * delta;
@@ -29,9 +32,20 @@ function Projectile({ data }: { data: ProjectileData }) {
     }
     ref.current.position.set(p.x, p.y, 0);
     ref.current.rotation.z += delta * 10;
-    const enemy = findEnemyNear(p.x, p.y, 0.6);
-    if (enemy) enemy.hit(cfg.damage, p.x - data.dir);
-    if (enemy || p.age > cfg.ttl) {
+    let hit = false;
+    if (data.owner === 'player') {
+      const enemy = findEnemyNear(p.x, p.y, 0.6);
+      if (enemy) enemy.hit(cfg.damage, p.x - data.dir);
+      hit = !!enemy;
+    } else {
+      const pl = playerRuntime.position;
+      if (Math.abs(pl.x - p.x) < 0.5 && p.y > pl.y && p.y < pl.y + 1.4) {
+        hit = true;
+        const store = useGameStore.getState();
+        if (store.hurtPlayer()) playerRuntime.pendingKnockback = { x: data.dir * 6, y: 5, z: 0 };
+      }
+    }
+    if (hit || p.age > cfg.ttl * (data.owner === 'enemy' ? 2 : 1)) {
       p.done = true;
       useGameStore.getState().removeProjectile(data.id);
     }
@@ -40,12 +54,12 @@ function Projectile({ data }: { data: ProjectileData }) {
   return data.kind === 'laser' ? (
     <mesh ref={ref} position={[data.x, data.y, 0]}>
       <boxGeometry args={[1.2, 0.08, 0.08]} />
-      <meshBasicMaterial color="#22D3EE" />
+      <meshBasicMaterial color={data.owner === 'enemy' ? '#E879F9' : '#22D3EE'} />
     </mesh>
   ) : (
     <mesh ref={ref} position={[data.x, data.y, 0]}>
       <icosahedronGeometry args={[0.22, 0]} />
-      <meshBasicMaterial color="#F97316" />
+      <meshBasicMaterial color={data.owner === 'enemy' ? '#DC2626' : '#F97316'} />
     </mesh>
   );
 }

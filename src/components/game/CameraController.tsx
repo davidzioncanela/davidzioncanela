@@ -5,6 +5,7 @@ import { useRef } from 'react';
 import * as THREE from 'three';
 import { GameState } from './GameCanvas';
 import { playerRuntime } from '@/lib/gameRuntime';
+import { useGameStore } from '@/store/gameStore';
 
 interface CameraControllerProps {
   gameState: GameState;
@@ -24,13 +25,15 @@ export function CameraController({ gameState }: CameraControllerProps) {
     const { x: px, y: py } = playerRuntime.position;
     const vx = playerRuntime.velocity.x;
     const lookAhead = THREE.MathUtils.clamp(vx * 0.4, -2.5, 2.5);
-    const cx = THREE.MathUtils.clamp(px + lookAhead, MIN_X, MAX_X);
+    const lock = useGameStore.getState().screenLock;
+    // Durante uma onda a câmera fica parada no centro da arena
+    const cx = lock ? (lock[0] + lock[1]) / 2 : THREE.MathUtils.clamp(px + lookAhead, MIN_X, MAX_X);
 
     let distance = 9;
     let height = 2;
     if (gameState === 'duel') {
-      distance = 7.5;
-      height = 1.8;
+      distance = lock ? Math.max(9, (lock[1] - lock[0]) * 0.75) : 9;
+      height = 2.5;
     } else if (gameState === 'dialog') {
       distance = 8;
       height = 2;
