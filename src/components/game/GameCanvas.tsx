@@ -16,6 +16,7 @@ import { InputProvider } from '@/contexts/InputContext';
 import { DeviceDetector, useIsTouch } from './ui/DeviceDetector';
 import { DuelHUD } from './ui/DuelHUD';
 import { SkySystem } from './sky/SkySystem';
+import { Scenery } from './sky/Scenery';
 import { PlayerSlot } from '@/lib/characters';
 import { useGameStore } from '@/store/gameStore';
 import { players } from '@/lib/gameRuntime';
@@ -52,6 +53,7 @@ export default function GameCanvas() {
             <ambientLight intensity={0.7} />
             <hemisphereLight args={['#E0F2FE', '#86EFAC', 0.6]} />
             <SkySystem />
+            <Scenery />
             {slots && (
               <Physics key={runId} gravity={[0, -25, 0]}>
                 <Level1 slots={slots} gameState={gameState} setGameState={setGameState} setDialogText={setDialogText} />

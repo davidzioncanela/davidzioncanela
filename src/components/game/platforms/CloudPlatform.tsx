@@ -3,7 +3,8 @@
 import { RigidBody, CuboidCollider } from '@react-three/rapier';
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Mesh } from 'three';
+import { Clone } from '@react-three/drei';
+import { useWhiteCloud } from '../sky/Scenery';
 
 interface CloudPlatformProps {
   position: [number, number, number];
@@ -19,6 +20,7 @@ interface CloudPlatformProps {
 
 export function CloudPlatform({ position, scale = [3, 0.4, 3], animated = false, speed = 0.5, targetY, delay = 0, float = false, floatSpeed = 0.6, floatRange = 0.4 }: CloudPlatformProps) {
   const groupRef = useRef<any>(null);
+  const cloud = useWhiteCloud('/assets/scenery/cloud_big.gltf');
   const currentY = useRef(position[1]);
   const startY = useRef(position[1]);
   const startTime = useRef(delay);
@@ -46,19 +48,8 @@ export function CloudPlatform({ position, scale = [3, 0.4, 3], animated = false,
   return (
     <RigidBody ref={groupRef} type="kinematicPosition" position={position} colliders={false}>
       <CuboidCollider args={[scale[0] / 2, scale[1] / 2, scale[2] / 2]} />
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={scale} />
-        <meshStandardMaterial color="#F8FAFC" opacity={0.95} transparent emissive="#E0F2FE" emissiveIntensity={0.2} />
-      </mesh>
-      {/* Detalhe de nuvem/ilhas flutuantes estilo DBZ */}
-      <mesh position={[scale[0]*0.15, scale[1]/2, -scale[2]*0.2]} scale={[0.4, 0.3, 0.4]}>
-        <sphereGeometry args={[1, 8, 6]} />
-        <meshStandardMaterial color="#FFFFFF" opacity={0.9} transparent />
-      </mesh>
-      <mesh position={[-scale[0]*0.2, scale[1]/2, scale[2]*0.15]} scale={[0.5, 0.35, 0.5]}>
-        <sphereGeometry args={[1, 8, 6]} />
-        <meshStandardMaterial color="#FFFFFF" opacity={0.9} transparent />
-      </mesh>
+      {/* Visual: nuvem fofinha do KayKit esticada no tamanho da plataforma */}
+      <Clone object={cloud} scale={[scale[0] / 3.4, 0.55, scale[2] / 2.1]} position={[0, scale[1] / 2 - 0.58, 0]} castShadow receiveShadow />
     </RigidBody>
   );
 }

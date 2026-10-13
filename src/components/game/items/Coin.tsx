@@ -29,7 +29,7 @@ export function Coin({ position }: { position: [number, number, number] }) {
       />
       <mesh ref={ref} rotation={[Math.PI / 2, 0, 0]}>
         <cylinderGeometry args={[0.3, 0.3, 0.08, 20]} />
-        <meshStandardMaterial color="#FFD700" metalness={0.7} roughness={0.3} emissive="#B8860B" emissiveIntensity={0.3} />
+        <meshStandardMaterial color="#FFD700" metalness={0.3} roughness={0.25} emissive="#FFB800" emissiveIntensity={1.2} toneMapped={false} />
       </mesh>
     </RigidBody>
   );

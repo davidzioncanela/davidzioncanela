@@ -115,4 +115,12 @@ Documento vivo com as regras do jogo. Atualize sempre que uma regra mudar.
 
 ## 8. Visual
 - Botões no estilo Duolingo: cantos bem arredondados, cores vivas, borda inferior grossa que "afunda" ao clicar.
-- HUD temático e cenário lúdico, com efeitos visuais ao fundo.
+- Fontes: Fredoka (títulos) e Nunito (textos).
+- HUD em "pílulas" brancas: vidas, moedas, pontos, fase; um cartão por jogador com o poder de ajuda (tecla e recarga) e o power-up ativo.
+- Cenário lúdico em camadas, com peças prontas do KayKit Medieval Hexagon (CC0): céu em degradê, sol com raios, arco-íris, montanhas, colinas com árvores, moinhos, o castelo do Bowser Jr. ao fundo, nuvens passeando e poeira mágica.
+- Power-ups com efeitos exagerados:
+  - na fase: caixa brilhante girando, com faíscas e luz colorida;
+  - ao coletar: explosão de luz (onda de choque e faíscas);
+  - enquanto ativo (efeito permanente): aura brilhante, anéis girando, faíscas e luz na cor do power-up;
+  - escudo da Laura: bolha azul ao redor de quem está protegido.
+- Bloom (brilho) na imagem final, desligado quando a tela está dividida.
