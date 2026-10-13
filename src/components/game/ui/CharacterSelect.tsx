@@ -8,6 +8,8 @@ interface CharacterSelectProps {
   isTouch: boolean;
   onStart: (slots: PlayerSlot[]) => void;
   onOnline: () => void;
+  // Volta para a cidade
+  onBack: () => void;
 }
 
 const CARD_COLORS: Record<CharacterId, string> = {
@@ -18,7 +20,7 @@ const CARD_COLORS: Record<CharacterId, string> = {
 };
 
 // Escolha do modo (1 ou 2 jogadores no mesmo teclado, ou online) e dos personagens
-export function CharacterSelect({ isTouch, onStart, onOnline }: CharacterSelectProps) {
+export function CharacterSelect({ isTouch, onStart, onOnline, onBack }: CharacterSelectProps) {
   const [mode, setMode] = useState<1 | 2 | null>(null);
   const [picked, setPicked] = useState<CharacterId[]>([]);
 
@@ -47,6 +49,9 @@ export function CharacterSelect({ isTouch, onStart, onOnline }: CharacterSelectP
             )}
             <button className="btn-duo btn-purple w-full" onClick={onOnline}>
               <Wifi size={22} /> Jogar online (até 4)
+            </button>
+            <button className="btn-duo btn-white w-full" onClick={onBack}>
+              <ArrowLeft size={18} /> Voltar para a cidade
             </button>
           </div>
         </>

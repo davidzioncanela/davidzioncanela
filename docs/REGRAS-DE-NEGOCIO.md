@@ -117,11 +117,22 @@ Documento vivo com as regras do jogo. Atualize sempre que uma regra mudar.
 - Quem cai reaparece no último chão firme.
 - Vidas zeradas: Game Over (reiniciar ou trocar personagens).
 
-## 7. Mundo aberto (menu principal)
-- O menu principal é uma **cidade em mundo aberto**, vista de cima (estilo Ragnarok).
-- Os personagens ficam parados (idle) ou andando pela cidade e conversam entre si por **chat real**.
-- A cidade tem NPCs.
-- O chat usa o servidor Socket.io; o histórico fica salvo no Turso.
+## 7. Mundo aberto (hub / menu principal)
+- O menu principal é uma **cidade em mundo aberto**, vista de cima (estilo Ragnarok), montada com o KayKit City Builder Bits (CC0).
+- Ao entrar, a pessoa informa o **nome** (2 a 20 letras) e escolhe o **personagem**; o aparelho lembra a escolha.
+- No centro fica a **pracinha** (chafariz, bancos, árvores), o lugar onde as crianças querem brincar na história.
+- Os personagens ficam parados (idle) ou andando; todos veem uns aos outros em tempo real, com o nome acima da cabeça.
+- **Andar**: toque/clique rápido no chão leva o personagem até o ponto (prédios bloqueiam); no computador também dá para usar WASD/setas.
+- **Câmera** (celular e computador):
+  - arrastar (1 dedo / botão esquerdo) gira em volta do personagem;
+  - pinça (2 dedos) / roda do mouse dá zoom;
+  - arrastar com 2 dedos / botão direito move a câmera;
+  - o botão **Centralizar** volta a câmera para o personagem.
+- **Chat real** entre os jogadores: mensagens de até 200 caracteres aparecem no painel e num **balão** acima de quem falou por 5 segundos.
+  - As últimas 50 mensagens ficam salvas (Turso) e aparecem para quem entra.
+  - Sem conexão com o servidor, a cidade funciona mas o chat fica desativado ("Offline").
+- **NPCs** moradores passeiam perto de casa e falam frases (dicas do jogo) quando alguém chega perto ou clica neles.
+- O botão **Aventura** abre a escolha do modo: 1 jogador, 2 no teclado ou online.
 
 ## 8. Visual
 - Botões no estilo Duolingo: cantos bem arredondados, cores vivas, borda inferior grossa que "afunda" ao clicar.

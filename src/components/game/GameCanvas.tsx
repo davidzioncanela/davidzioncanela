@@ -19,6 +19,8 @@ import { DeviceDetector, useIsTouch } from './ui/DeviceDetector';
 import { DuelHUD } from './ui/DuelHUD';
 import { SkySystem } from './sky/SkySystem';
 import { Scenery } from './sky/Scenery';
+import { Town } from '../town/Town';
+import { TownHUD } from '../town/TownHUD';
 import { PlayerSlot } from '@/lib/characters';
 import { useGameStore } from '@/store/gameStore';
 import { players } from '@/lib/gameRuntime';
@@ -34,6 +36,9 @@ export default function GameCanvas() {
   const [dialogText, setDialogText] = useState<string[]>([]);
   const [splitCount, setSplitCount] = useState(0);
   const [lobby, setLobby] = useState<{ code?: string } | null>(null);
+  // Menu principal é a cidade; "Aventura" abre a escolha do modo de jogo
+  const [choosing, setChoosing] = useState(false);
+  const [recenter, setRecenter] = useState(0);
 
   // Entrou pelo link compartilhado (?sala=CODE): abre direto a sala online
   useEffect(() => {
@@ -65,17 +70,21 @@ export default function GameCanvas() {
       <div className="relative h-[100dvh] w-screen">
         <Canvas shadows camera={{ position: [-12, 14, 12], fov: 60 }} dpr={[1, 2]}>
           <Suspense fallback={null}>
-            <ambientLight intensity={0.7} />
-            <hemisphereLight args={['#E0F2FE', '#86EFAC', 0.6]} />
-            <SkySystem />
-            <Scenery />
-            {slots && (
-              <Physics key={runId} gravity={[0, -25, 0]}>
-                <Level1 slots={slots} gameState={gameState} setGameState={setGameState} setDialogText={setDialogText} />
-              </Physics>
+            {slots ? (
+              <>
+                <ambientLight intensity={0.7} />
+                <hemisphereLight args={['#E0F2FE', '#86EFAC', 0.6]} />
+                <SkySystem />
+                <Scenery />
+                <Physics key={runId} gravity={[0, -25, 0]}>
+                  <Level1 slots={slots} gameState={gameState} setGameState={setGameState} setDialogText={setDialogText} />
+                </Physics>
+                <CameraController gameState={gameState} bounds={LEVEL1_BOUNDS} />
+                <SplitScreen bounds={LEVEL1_BOUNDS} onSplitChange={setSplitCount} />
+              </>
+            ) : (
+              <Town recenter={recenter} />
             )}
-            <CameraController gameState={gameState} bounds={LEVEL1_BOUNDS} />
-            <SplitScreen bounds={LEVEL1_BOUNDS} onSplitChange={setSplitCount} />
             {splitCount === 0 && (
               <EffectComposer>
                 <Bloom intensity={1.2} luminanceThreshold={0.85} luminanceSmoothing={0.2} mipmapBlur />
@@ -89,7 +98,18 @@ export default function GameCanvas() {
             {splitCount > 2 && <div className="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 bg-white shadow-[0_0_12px_rgba(0,0,0,0.4)]" />}
           </div>
         )}
-        {!slots && !lobby && <CharacterSelect isTouch={isTouch} onStart={startGame} onOnline={() => setLobby({})} />}
+        {!slots && !lobby && !choosing && <TownHUD onAdventure={() => setChoosing(true)} onRecenter={() => setRecenter((n) => n + 1)} />}
+        {!slots && !lobby && choosing && (
+          <CharacterSelect
+            isTouch={isTouch}
+            onStart={(next) => {
+              setChoosing(false);
+              startGame(next);
+            }}
+            onOnline={() => (setChoosing(false), setLobby({}))}
+            onBack={() => setChoosing(false)}
+          />
+        )}
         {!slots && lobby && (
           <OnlineLobby
             initialCode={lobby.code}

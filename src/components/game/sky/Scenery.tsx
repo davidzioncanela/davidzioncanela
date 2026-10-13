@@ -156,7 +156,8 @@ function DriftingClouds({ from, to }: { from: number; to: number }) {
 }
 
 // Cenário lúdico em camadas (parallax natural da câmera perspectiva)
-export function Scenery({ from = -60, to = 140 }: { from?: number; to?: number }) {
+// skyOnly: só céu, sol, arco-íris e nuvens (usado na cidade)
+export function Scenery({ from = -60, to = 140, skyOnly = false }: { from?: number; to?: number; skyOnly?: boolean }) {
   const layers = useMemo(() => {
     const rnd = seeded(42);
     const far: { piece: Piece; x: number; s: number; r: number }[] = [];
@@ -167,6 +168,18 @@ export function Scenery({ from = -60, to = 140 }: { from?: number; to?: number }
     for (let x = from; x < to; x += 5 + rnd() * 4) near.push({ piece: (['treesA', 'treesB', 'treesM', 'treeA', 'treeB', 'rockA'] as Piece[])[Math.floor(rnd() * 6)], x, s: 3 + rnd() * 2, r: rnd() * 6 });
     return { far, mid, near };
   }, [from, to]);
+
+  if (skyOnly)
+    return (
+      <group>
+        <SkyDome />
+        <Sun />
+        <Rainbow />
+        <group position={[0, 20, 0]}>
+          <DriftingClouds from={from} to={to} />
+        </group>
+      </group>
+    );
 
   return (
     <group>
